@@ -1,12 +1,13 @@
 """매일 data.json을 새로 만드는 스크립트 (GitHub Actions가 자동 실행)"""
 import json, pathlib, datetime, urllib.request
+from zoneinfo import ZoneInfo
 import yfinance as yf
 
 ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "data.json"
 MANUAL = ROOT / "manual.json"
 old = json.loads(OUT.read_text("utf-8")) if OUT.exists() else {}
-today = datetime.date.today().isoformat()
+today = datetime.datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()  # 한국 날짜 기준
 
 
 def closes(ticker, period):
