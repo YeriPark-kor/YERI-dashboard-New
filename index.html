@@ -217,6 +217,16 @@
 
         .change-up { color: var(--color-up-red); }
         .change-down { color: var(--color-down-blue); }
+        .fg-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: var(--space-xl); }
+        .fg-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .fg-toggle { display: flex; gap: 8px; }
+        .fg-note { font-size: 12px; color: var(--color-text-gray); }
+        .fg-body { display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 20px; }
+        .fg-side { min-width: 220px; flex: 1; max-width: 320px; }
+        .fg-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--color-border); }
+        .fg-row-label { font-size: 13px; color: #ffffff; font-weight: 700; }
+        .fg-row-zone { font-size: 12px; color: var(--color-text-gray); }
+        .fg-badge { width: 34px; height: 34px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -368,17 +378,23 @@
         
         <!-- 🧭 CNN 공포탐욕지수 (두 번째 탭으로 이동 & 소형화 적용) -->
         <div class="section-badge-title">🧭 CNN Fear & Greed Index (시장 심리)</div>
-        <div class="sentiment-card-compact">
-            <div>
-                <div style="font-size: 15.5px; font-weight: 800; color: #ffffff; margin-bottom: 2px;">현재 시장 심리: <span id="fg-text" style="color: var(--color-neon-green);">--</span></div>
-                <div style="font-size: 12px; color: var(--color-text-gray); line-height: 1.4;">
-                    • <span id="fg-desc">CNN Fear & Greed Index 기준</span><br>
-                    <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" class="link-btn" style="margin-top: 4px;">CNN 원문 확인 🔗</a>
+        <div class="fg-card">
+            <div class="fg-head">
+                <div class="fg-toggle">
+                    <button class="sub-tab-btn active" onclick="fgView('overview', this)">Overview</button>
+                    <button class="sub-tab-btn" onclick="fgView('timeline', this)">Timeline</button>
                 </div>
+                <div id="fg-asof" class="fg-note"></div>
             </div>
-            <div class="gauge-wrapper-sm">
-                <canvas id="gaugeChart"></canvas>
+            <div id="fg-overview" class="fg-body">
+                <div id="fg-gauge" style="flex:1;min-width:260px;text-align:center"></div>
+                <div id="fg-side" class="fg-side"></div>
             </div>
+            <div id="fg-timeline" style="display:none">
+                <div id="fg-timeline-msg" class="fg-note"></div>
+                <div class="chart-canvas-wrapper" style="height:300px"><canvas id="fgChart"></canvas></div>
+            </div>
+            <div style="margin-top:10px"><a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" class="link-btn">CNN 원문 확인 🔗</a></div>
         </div>
 
         <div class="section-badge-title">🗺️ 트레이딩 뷰 스타일 마켓 히트맵</div>
@@ -668,26 +684,80 @@ function changePeriod(pKey, btn) {
     renderChart();
 }
 
-/* 🧭 소형 컴팩트 CNN 공포탐욕지수 게이지 차트 */
-function renderGaugeChart() {
-    const sc = (DATA.fear_greed && DATA.fear_greed.score) || 50;
-    const ctx = document.getElementById('gaugeChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['점수', '잔여'],
-            datasets: [{
-                data: [sc, 100 - sc],
-                backgroundColor: [sc < 45 ? '#3b82f6' : (sc < 55 ? '#f59e0b' : '#34d399'), '#2a3042'],
-                borderWidth: 0
-            }]
-        },
+/* 🧭 CNN 공포탐욕지수 (Overview / Timeline) */
+const FG_ZONES = [
+    { from: 0,  to: 25,  label: 'Extreme Fear',  ko: '극단적 공포', color: '#f43f5e' },
+    { from: 25, to: 45,  label: 'Fear',          ko: '공포',        color: '#fb923c' },
+    { from: 45, to: 55,  label: 'Neutral',       ko: '중립',        color: '#94a3b8' },
+    { from: 55, to: 75,  label: 'Greed',         ko: '탐욕',        color: '#34d399' },
+    { from: 75, to: 100, label: 'Extreme Greed', ko: '극단적 탐욕', color: '#10b981' }
+];
+let fgChart = null;
+function fgZone(s) { return FG_ZONES.find(z => s < z.to) || FG_ZONES[FG_ZONES.length - 1]; }
+function fgPt(v, r) { const t = Math.PI * (1 - v / 100); return [150 + r * Math.cos(t), 150 - r * Math.sin(t)]; }
+function fgArc(a, b, r1, r2) {
+    const p1 = fgPt(a, r1), p2 = fgPt(b, r1), p3 = fgPt(b, r2), p4 = fgPt(a, r2);
+    return `M${p1[0]},${p1[1]} A${r1},${r1} 0 0 1 ${p2[0]},${p2[1]} L${p3[0]},${p3[1]} A${r2},${r2} 0 0 0 ${p4[0]},${p4[1]} Z`;
+}
+
+function renderFearGreed() {
+    const f = DATA.fear_greed;
+    const gauge = document.getElementById('fg-gauge');
+    if (!f || f.score == null) { gauge.innerHTML = '<div class="fg-note">공포탐욕지수 데이터가 없습니다</div>'; return; }
+    const z = fgZone(f.score);
+    let svg = '<svg viewBox="0 0 300 218" style="width:100%;max-width:340px">';
+    FG_ZONES.forEach(zz => { svg += `<path d="${fgArc(zz.from + 0.6, zz.to - 0.6, 125, 82)}" fill="${zz.color}" opacity="${zz === z ? 1 : 0.28}"/>`; });
+    [0, 25, 50, 75, 100].forEach(v => { const p = fgPt(v, 140); svg += `<text x="${p[0]}" y="${p[1] + 4}" text-anchor="middle" font-size="11" fill="#94a3b8">${v}</text>`; });
+    const n = fgPt(f.score, 100);
+    svg += `<line x1="150" y1="150" x2="${n[0]}" y2="${n[1]}" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/><circle cx="150" cy="150" r="8" fill="#ffffff"/>`;
+    svg += `<text x="150" y="192" text-anchor="middle" font-size="34" font-weight="800" fill="#ffffff">${f.score}</text>`;
+    svg += `<text x="150" y="212" text-anchor="middle" font-size="13" font-weight="700" fill="${z.color}">${z.ko} (${z.label})</text></svg>`;
+    gauge.innerHTML = svg;
+
+    const p = f.prev || {};
+    const rows = [['전일 마감', p.close], ['1주 전', p.week], ['1개월 전', p.month], ['1년 전', p.year]].filter(r => r[1] != null);
+    document.getElementById('fg-side').innerHTML = rows.map(r => {
+        const zz = fgZone(r[1]);
+        return `<div class="fg-row"><div><div class="fg-row-label">${r[0]}</div><div class="fg-row-zone">${zz.ko}</div></div><div class="fg-badge" style="border-color:${zz.color};color:${zz.color}">${r[1]}</div></div>`;
+    }).join('');
+
+    let msg = 'CNN 업데이트: ' + (f.asof || '-');
+    if (f.source === 'manual') msg += ' · 수동 입력값';
+    else if (f.fetched && f.fetched !== DATA.updated) msg += ' · ⚠️ 오늘 자동 갱신 실패 (옛 값일 수 있어요)';
+    document.getElementById('fg-asof').textContent = msg;
+}
+
+function fgView(which, btn) {
+    document.querySelectorAll('.fg-toggle .sub-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('fg-overview').style.display = which === 'overview' ? 'flex' : 'none';
+    document.getElementById('fg-timeline').style.display = which === 'timeline' ? 'block' : 'none';
+    if (which === 'timeline') renderFgChart();
+}
+
+function renderFgChart() {
+    const h = DATA.fear_greed && DATA.fear_greed.history;
+    const msg = document.getElementById('fg-timeline-msg');
+    if (!h || !h.labels || !h.labels.length) {
+        msg.textContent = '추이 데이터가 아직 없어요. CNN에서 자동으로 가져오면 표시됩니다.';
+        return;
+    }
+    msg.textContent = '';
+    if (fgChart) fgChart.destroy();
+    const cnt = h.labels.length;
+    const guide = v => ({ data: Array(cnt).fill(v), borderColor: 'rgba(148,163,184,0.35)', borderDash: [4, 4], borderWidth: 1, pointRadius: 0, fill: false });
+    fgChart = new Chart(document.getElementById('fgChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: h.labels, datasets: [
+            { label: 'Fear & Greed', data: h.values, borderColor: '#60a5fa', borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.2 },
+            guide(25), guide(50), guide(75) ] },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            rotation: -90,
-            circumference: 180,
-            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } },
+                y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', stepSize: 25 } }
+            }
         }
     });
 }
@@ -704,15 +774,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     domesticStocks = (DATA.stocks && DATA.stocks.domestic) || [];
     globalStocks = (DATA.stocks && DATA.stocks.global) || [];
     if (DATA.fx) document.getElementById('fx-value').innerText = Number(DATA.fx).toLocaleString(undefined, {maximumFractionDigits: 2}) + ' 원';
-    if (DATA.fear_greed) {
-        document.getElementById('fg-text').innerText = DATA.fear_greed.score + ' (' + DATA.fear_greed.label + ')';
-        document.getElementById('fg-desc').innerText = 'CNN Fear & Greed Index 기준 ' + DATA.fear_greed.score + '점';
-    }
     if (DATA.updated) document.querySelector('.hero-hologram-badge span').innerHTML = 'PARK YERI &bull; UPDATED ' + DATA.updated;
     renderMetricCards();
     renderChart();
     renderHeatmap();
-    renderGaugeChart();
+    renderFearGreed();
 });
 </script>
 
