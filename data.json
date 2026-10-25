@@ -1,0 +1,36 @@
+{
+  "updated": "초기값",
+  "fx": 1323.76,
+  "fear_greed": {"score": 68, "label": "탐욕"},
+  "metrics": {
+    "wti": {"price": 103.27, "change": 3.82},
+    "brent": {"price": 111.70, "change": -1.30},
+    "dubai": {"price": 111.68, "change": 1.07},
+    "naphtha": {"price": 942.76, "change": 2.90},
+    "spread": {"price": 210, "change": 0},
+    "propylene": {"price": 185, "change": 0}
+  },
+  "series": {},
+  "stocks": {
+    "domestic": [
+      {"name": "KOSPI", "val": "5,550.30", "change": "+0.30%"},
+      {"name": "KOSDAQ", "val": "1,215.42", "change": "-2.15%"},
+      {"name": "SK하이닉스", "val": "198,000원", "change": "+4.12%"},
+      {"name": "삼성전자", "val": "78,500원", "change": "+1.05%"},
+      {"name": "LG화학", "val": "345,500원", "change": "+1.32%"},
+      {"name": "금호석유", "val": "152,000원", "change": "-0.85%"},
+      {"name": "S-Oil", "val": "74,200원", "change": "-2.40%"},
+      {"name": "롯데케미칼", "val": "112,000원", "change": "-1.10%"}
+    ],
+    "global": [
+      {"name": "S&P 500", "val": "7,623.68", "change": "-1.21%"},
+      {"name": "NVIDIA", "val": "$212.21", "change": "-4.40%"},
+      {"name": "Apple", "val": "$347.73", "change": "+1.20%"},
+      {"name": "Microsoft", "val": "$428.15", "change": "+0.92%"},
+      {"name": "Alphabet", "val": "$324.22", "change": "-3.10%"},
+      {"name": "ExxonMobil", "val": "$124.80", "change": "+1.80%"},
+      {"name": "Chevron", "val": "$162.40", "change": "+1.25%"},
+      {"name": "TSMC", "val": "$288.50", "change": "-4.52%"}
+    ]
+  }
+}

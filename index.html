@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YERI's Data Intelligence & Strategy Dashboard</title>
+    
+    <meta property="og:title" content="YERI's Data Intelligence & Strategy Dashboard">
+    <meta property="og:description" content="석유화학 마켓 인텔리전스, AI 빅테크 동향, 마케팅 전략 분석 대시보드">
+    <meta property="og:type" content="website">
+
+    <!-- Chart.js 및 외부 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --color-canvas: #07090d;
+            --color-surface: #131722;
+            --color-surface-hover: #1a1f2c;
+            --color-ink: #f8fafc;
+            --color-text-gray: #94a3b8;
+            --color-border: #2a3042;
+            --color-neon-green: #34d399;
+            --color-up-red: #f43f5e;
+            --color-down-blue: #3b82f6;
+            --radius-sm: 12px;
+            --radius-lg: 24px;
+            --radius-pill: 999px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 40px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background-color: var(--color-canvas);
+            color: var(--color-ink);
+            margin: 0;
+            padding: var(--space-lg);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .container { max-width: 1120px; margin: 0 auto; }
+
+        .hero-banner {
+            background: radial-gradient(circle at 50% 20%, #172026 0%, #11151c 60%, #07090d 100%);
+            color: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 40px 40px 30px 40px;
+            margin-bottom: var(--space-xl);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .hero-top-tag {
+            font-size: 11.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--color-neon-green); margin-bottom: 8px; font-weight: 700;
+        }
+
+        .hero-hologram-badge {
+            display: inline-flex; align-items: center; gap: 10px; background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.3);
+            padding: 6px 16px; border-radius: var(--radius-pill); margin: 6px 0 14px 0; backdrop-filter: blur(12px);
+        }
+
+        .wave-bars { display: flex; align-items: center; gap: 3px; height: 14px; }
+        .wave-bar { width: 3px; background: var(--color-neon-green); border-radius: 2px; animation: wavePulse 1.2s ease-in-out infinite alternate; }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; height: 10px; }
+        .wave-bar:nth-child(3) { animation-delay: 0.4s; height: 14px; }
+        .wave-bar:nth-child(4) { animation-delay: 0.1s; height: 6px; }
+
+        @keyframes wavePulse { 0% { transform: scaleY(0.4); opacity: 0.5; } 100% { transform: scaleY(1); opacity: 1; } }
+
+        h1.hero-title { font-family: "Times New Roman", Times, serif, Georgia; font-size: 36px; font-weight: 400; margin: 0 0 8px 0; color: #ffffff; }
+
+        .hero-desc {
+            font-size: 14.5px; max-width: 680px; margin: 0 auto 20px auto; font-weight: 600; line-height: 1.5;
+            background: linear-gradient(270deg, #34d399, #60a5fa, #f43f5e, #34d399); background-size: 300% 300%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: neonShine 6s ease infinite;
+        }
+
+        @keyframes neonShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .time-float-left {
+            position: absolute; top: 20px; left: 24px; background: rgba(19, 23, 34, 0.85); border: 1px solid rgba(52, 211, 153, 0.4);
+            padding: 8px 16px; border-radius: var(--radius-sm); font-size: 11.5px; text-align: left; backdrop-filter: blur(8px); line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .exchange-float {
+            position: absolute; top: 20px; right: 24px; background: rgba(19, 23, 34, 0.85); border: 1px solid rgba(52, 211, 153, 0.4);
+            padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; text-align: right; backdrop-filter: blur(8px); box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .hero-bottom-area { display: flex; align-items: center; justify-content: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; flex-wrap: wrap; gap: 12px; }
+        .hero-tab-menu { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+        .tab-btn {
+            padding: 10px 22px; font-size: 14px; font-weight: 600; color: var(--color-text-gray); background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--color-border); border-radius: var(--radius-pill); cursor: pointer; transition: all 0.25s ease; white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--color-neon-green); border-color: rgba(52, 211, 153, 0.5); background: rgba(52, 211, 153, 0.05); }
+        .tab-btn.active { background-color: var(--color-neon-green); color: #07090d; border-color: var(--color-neon-green); font-weight: 700; box-shadow: 0 4px 20px rgba(52, 211, 153, 0.4); }
+
+        .tab-content { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .tab-content.active { display: block; opacity: 1; }
+
+        .feature-card {
+            background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--space-lg); margin-bottom: var(--space-xl);
+            border: 1px solid var(--color-border); box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+        }
+
+        .section-badge-title {
+            display: inline-flex; align-items: center; background: var(--color-surface); color: var(--color-neon-green);
+            padding: 8px 18px; border-radius: var(--radius-pill); font-size: 13.5px; font-weight: 700; margin-bottom: var(--space-md);
+            border: 1px solid rgba(52, 211, 153, 0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .box-title {
+            display: flex; align-items: center; font-size: 15px; font-weight: 700; color: #ffffff; margin-top: var(--space-lg); margin-bottom: var(--space-sm);
+            padding: 10px 14px; background: #090c12; border-radius: var(--radius-sm); border-left: 3px solid var(--color-neon-green);
+            border-top: 1px solid var(--color-border); border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);
+        }
+
+        .briefing-highlight-box {
+            background: #090c12; border: 1px solid var(--color-border); border-left: 4px solid var(--color-neon-green);
+            border-radius: var(--radius-sm); padding: 16px 18px; margin-bottom: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .briefing-tag {
+            display: inline-block; background: rgba(52, 211, 153, 0.12); color: var(--color-neon-green);
+            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-pill); margin-bottom: 6px; border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .briefing-title-text { font-size: 14.5px; font-weight: 700; color: #ffffff; margin-bottom: 6px; }
+        .briefing-desc-text { font-size: 13px; color: #cbd5e1; line-height: 1.55; }
+        .briefing-desc-text b { color: var(--color-neon-green); }
+
+        /* 📈 차트 섹션 스타일 */
+        .market-chart-section {
+            background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: var(--space-xl);
+        }
+
+        .chart-header-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .chart-header-card { background: #090c12; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 14px; cursor: pointer; transition: all 0.2s ease; }
+        .chart-header-card:hover, .chart-header-card.active { border-color: var(--color-neon-green); background: var(--color-surface-hover); }
+
+        .card-label { font-size: 11.5px; color: var(--color-text-gray); margin-bottom: 4px; }
+        .card-price { font-size: 18px; font-weight: 800; color: #ffffff; }
+        .card-change { font-size: 11.5px; font-weight: 700; }
+
+        .chart-controls {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+            background: #090c12; padding: 8px 12px; border-radius: var(--radius-pill); border: 1px solid var(--color-border);
+        }
+        .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-btn { background: transparent; border: none; color: var(--color-text-gray); padding: 6px 14px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .filter-btn:hover { color: #ffffff; }
+        .filter-btn.active { background: var(--color-surface-hover); color: var(--color-neon-green); border: 1px solid rgba(52, 211, 153, 0.4); font-weight: 700; }
+
+        .chart-canvas-wrapper { position: relative; height: 380px; width: 100%; }
+
+        /* 🔥 Finviz 스타일 트레이딩 히트맵 */
+        .heatmap-container-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: var(--space-xl); }
+        .heatmap-sub-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .sub-tab-btn { background: #090c12; border: 1px solid var(--color-border); color: var(--color-text-gray); padding: 8px 20px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; cursor: pointer; }
+        .sub-tab-btn.active { background: var(--color-neon-green); color: #07090d; border-color: var(--color-neon-green); }
+
+        .heatmap-treemap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        @media (max-width: 900px) { .heatmap-treemap-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .treemap-tile { border-radius: 10px; padding: 16px; min-height: 95px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .treemap-tile:hover { transform: translateY(-3px); }
+
+        .tm-red-strong { background: rgba(225, 29, 72, 0.38); border: 1px solid rgba(244, 63, 94, 0.7); }
+        .tm-red { background: rgba(225, 29, 72, 0.2); border: 1px solid rgba(244, 63, 94, 0.4); }
+        .tm-green { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(52, 211, 153, 0.4); }
+        .tm-green-strong { background: rgba(16, 185, 129, 0.38); border: 1px solid rgba(52, 211, 153, 0.7); }
+
+        .tm-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .tm-title { font-size: 14px; font-weight: 800; color: #ffffff; }
+        .tm-del { background: rgba(0,0,0,0.3); border: none; color: #fff; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; cursor: pointer; }
+        .tm-val { font-size: 16px; font-weight: 700; color: #ffffff; }
+        .tm-chg { font-size: 12px; font-weight: 700; }
+
+        /* 🧭 소형 컴팩트 CNN 공포탐욕지수 스타일 */
+        .sentiment-card-compact {
+            background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+            padding: 16px 20px; margin-bottom: var(--space-xl); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+        }
+        .gauge-wrapper-sm { width: 160px; height: 85px; position: relative; margin: 0 auto; }
+
+        /* 🇺🇸 트럼프 Truth Social 섹션 */
+        .trump-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-lg); margin-bottom: var(--space-xl); box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6); }
+        .trump-item { border-bottom: 1px dashed var(--color-border); padding-bottom: var(--space-md); margin-bottom: var(--space-md); }
+        .trump-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .trump-date { font-size: 12px; font-weight: 700; color: var(--color-neon-green); margin-bottom: 6px; }
+        .trump-original { font-size: 12.5px; font-style: italic; color: #e2e8f0; background: #090c12; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); margin-bottom: 8px; }
+        .trump-korean { font-size: 13px; font-weight: 500; color: #ffffff; }
+
+        /* 📰 뉴스 카드 스타일 */
+        .news-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        @media (max-width: 800px) { .news-container { grid-template-columns: 1fr; } }
+        .news-item-card { background: #090c12; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s; }
+        .news-item-card:hover { border-color: rgba(52, 211, 153, 0.5); }
+        .news-tag { display: inline-block; background: rgba(52, 211, 153, 0.12); color: var(--color-neon-green); font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-pill); margin-bottom: 6px; width: fit-content; }
+        .news-title { font-size: 13.5px; font-weight: 700; color: #ffffff; margin-bottom: 6px; line-height: 1.4; }
+
+        .search-box { display: flex; gap: var(--space-sm); margin-bottom: var(--space-xl); }
+        .search-input { flex: 1; padding: 12px var(--space-lg); border: 1px solid var(--color-border); border-radius: var(--radius-pill); font-size: 14px; background: var(--color-surface); color: #ffffff; outline: none; }
+        .button-primary { background-color: var(--color-neon-green); color: #07090d; border: none; padding: 0 28px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; cursor: pointer; }
+        .link-btn { color: var(--color-neon-green); text-decoration: none; font-weight: 600; background: rgba(52, 211, 153, 0.1); padding: 3px 8px; border-radius: 6px; font-size: 11px; display: inline-block; border: 1px solid rgba(52, 211, 153, 0.25); width: fit-content; margin-top: 6px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; color: #cbd5e1; }
+        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--color-border); }
+        th { background: #090c12; font-weight: 700; color: var(--color-neon-green); font-size: 14.5px; }
+
+        .change-up { color: var(--color-up-red); }
+        .change-down { color: var(--color-down-blue); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- 🌌 히어로 배너 (실시간 갱신 버튼 삭제 완료) -->
+    <div class="hero-banner">
+        <div class="time-float-left">
+            <div style="color: var(--color-text-gray); font-size: 10.5px;">🇺🇸 US Market (EST/EDT)</div>
+            <div id="us-time" style="font-weight: 700; color: var(--color-neon-green); font-size: 12px; margin-bottom: 4px;">--</div>
+            <div style="color: var(--color-text-gray); font-size: 10.5px;">🇰🇷 Korea (KST)</div>
+            <div id="kst-time" style="font-weight: 700; color: #ffffff; font-size: 12px;">--</div>
+        </div>
+
+        <div class="exchange-float">
+            <div style="color: var(--color-text-gray); font-size: 11px;">USD/KRW 실시간 환율</div>
+            <div id="fx-value" style="font-weight: 700; color: #ffffff; font-size: 14px;">1,323.76 원</div>
+        </div>
+        
+        <div class="hero-top-tag">Data Specialist & Strategy Intelligence</div>
+        
+        <div class="hero-hologram-badge">
+            <div class="wave-bars">
+                <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            </div>
+            <span style="font-size: 12px; font-weight: 600; color: var(--color-neon-green); letter-spacing: 0.5px;">PARK YERI &bull; LIVE DASHBOARD</span>
+        </div>
+
+        <h1 class="hero-title">YERI's Data Intelligence</h1>
+        <p class="hero-desc">⚡ 원가 변동성 대응 가격 방어와 AI 기반 고부가 스페셜티 전략 마켓 인텔리전스</p>
+
+        <div class="hero-bottom-area">
+            <div class="hero-tab-menu">
+                <button class="tab-btn active" onclick="switchTab('market-tab', this)">📊 석유화학 시황 & 리포트</button>
+                <button class="tab-btn" onclick="switchTab('stock-tab', this)">🗺️ 트레이딩 히트맵 & 공포탐욕지수</button>
+                <button class="tab-btn" onclick="switchTab('english-tab', this)">🗣️ 컨설팅 & 비즈니스 전략 영어</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 1: 석유화학 시황 & 리포트 -->
+    <div id="market-tab" class="tab-content active">
+        
+        <!-- 📌 Today's Key Takeaways -->
+        <div class="section-badge-title">📌 Today's Key Takeaways (마케팅 및 사업 전략)</div>
+        <div class="feature-card">
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; font-size: 14.5px; color: var(--color-neon-green); margin-bottom: 4px;">1. 유가 및 원료비 강세 대응 포뮬러 연동 강화</div>
+                <div style="font-size: 13.5px; color: var(--color-text-gray); line-height: 1.55;">
+                    • 고유가 지속에 따른 B2B 고객사 가격 인상 전가 및 포뮬러 계약 비율 확대.<br>
+                    • 원자재 변동 대응 자동화 견적 모델 도입으로 수익성 방어.
+                </div>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--color-border); margin: 12px 0;">
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; font-size: 14.5px; color: var(--color-neon-green); margin-bottom: 4px;">2. 범용 제품 수급 둔화 및 고부가 스페셜티 집중</div>
+                <div style="font-size: 13.5px; color: var(--color-text-gray); line-height: 1.55;">
+                    • 올레핀 및 기초유분 원가 압박 장기화에 맞춘 가동률 최적화.<br>
+                    • 데이터 기반 타겟 마케팅을 통한 고부가 소재 제품군 마진 타겟팅.
+                </div>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--color-border); margin: 12px 0;">
+            <div>
+                <div style="font-weight: 700; font-size: 14.5px; color: var(--color-neon-green); margin-bottom: 4px;">3. AI 기반 인텔리전스 및 사업 전략 효율화</div>
+                <div style="font-size: 13.5px; color: var(--color-text-gray); line-height: 1.55;">
+                    • 엔터프라이즈 AI 솔루션을 통한 모니터링 주기 단축.<br>
+                    • 시장 동향과 글로벌 마켓 인텔리전스를 실시간 연계하여 빠른 의사결정 수립.
+                </div>
+            </div>
+        </div>
+
+        <!-- 📈 석유화학 & 에너지 중심 차트 -->
+        <div class="section-badge-title">📊 핵심 원자재 및 스프레드 인텔리전스 (1년 추이)</div>
+        <div class="market-chart-section">
+            <div class="chart-header-cards" id="metric-cards"></div>
+
+            <div class="chart-controls">
+                <div class="filter-group" id="metric-buttons">
+                    <button class="filter-btn active" onclick="selectMetric('wti', this)">WTI 원유</button>
+                    <button class="filter-btn" onclick="selectMetric('brent', this)">Brent 원유</button>
+                    <button class="filter-btn" onclick="selectMetric('dubai', this)">두바이유</button>
+                    <button class="filter-btn" onclick="selectMetric('naphtha', this)">MOPJ 납사</button>
+                    <button class="filter-btn" onclick="selectMetric('spread', this)">에틸렌 스프레드</button>
+                    <button class="filter-btn" onclick="selectMetric('propylene', this)">프로필렌 스프레드</button>
+                </div>
+                <div class="filter-group" id="period-buttons">
+                    <button class="filter-btn" onclick="changePeriod('3m', this)">3개월</button>
+                    <button class="filter-btn" onclick="changePeriod('6m', this)">6개월</button>
+                    <button class="filter-btn active" onclick="changePeriod('1y', this)">1년</button>
+                    <button class="filter-btn" onclick="changePeriod('2y', this)">2년</button>
+                    <button class="filter-btn" onclick="changePeriod('all', this)">전체</button>
+                </div>
+            </div>
+
+            <div class="chart-canvas-wrapper">
+                <canvas id="marketChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 📑 데일리 석유화학 & 원자재 마켓 브리핑 인사이트 -->
+        <div class="feature-card">
+            <div style="font-size: 17px; font-weight: 700; margin-bottom: 14px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px; color: #ffffff;">
+                📑 데일리 석유화학 & 원자재 마켓 브리핑 인사이트
+            </div>
+
+            <div class="box-title">1. 핵심 시장 지표 요약 (유가 / 납사 / 스프레드)</div>
+            
+            <div class="briefing-highlight-box">
+                <span class="briefing-tag">KEY INSIGHT 01</span>
+                <div class="briefing-title-text">국제유가 6개월래 최고치 마감 (WTI $103.27 / 브렌트 $116.72)</div>
+                <div class="briefing-desc-text">
+                    WTI 원유 배럴당 $103.27(+3.80%), 브렌트유 $116.72(+3.14%)로 거래 마감. 중동 지정학적 리스크 심화로 국내 석화업계 원료 도입가 부담 가중.
+                </div>
+            </div>
+
+            <div class="briefing-highlight-box">
+                <span class="briefing-tag">KEY INSIGHT 02</span>
+                <div class="briefing-title-text">MOPJ 납사 $942대 고착 및 올레핀 스프레드 압박</div>
+                <div class="briefing-desc-text">
+                    MOPJ 납사는 $942.76으로 고공행진 중이며, 에틸렌-납사 스프레드는 BEP($300) 하회 수준인 $210선 유지로 NCC 크래커 감산 지속.
+                </div>
+            </div>
+
+            <div class="box-title">2. 석유화학 주요 이슈 & 실무 시사점</div>
+
+            <div class="briefing-highlight-box">
+                <span class="briefing-tag">STRATEGY 01</span>
+                <div class="briefing-title-text">원가 대응 및 크래커 가동률 최적화</div>
+                <div class="briefing-desc-text">
+                    • <b>시황:</b> 원가 급등에 비해 더딘 수요 회복으로 감산 기조 유지 불가피.<br>
+                    • <b>대응:</b> 고부가 다운스트림 제품 중심 집중 및 포뮬러 계약 방어.
+                </div>
+            </div>
+
+            <div class="briefing-highlight-box">
+                <span class="briefing-tag">STRATEGY 02</span>
+                <div class="briefing-title-text">스페셜티 및 친환경 포트폴리오 전환</div>
+                <div class="briefing-desc-text">
+                    • <b>시황:</b> 범용 시황 둔화 극복을 위해 고부가가치 소재 중심으로 전환 가속.<br>
+                    • <b>대응:</b> 배터리 소재 및 고기능 엔지니어링 플라스틱 타겟 마케팅 제고.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: 트레이딩 히트맵, 소형 공포탐욕지수, 트럼프, 뉴스 TOP 10 -->
+    <div id="stock-tab" class="tab-content">
+        
+        <!-- 🧭 CNN 공포탐욕지수 (두 번째 탭으로 이동 & 소형화 적용) -->
+        <div class="section-badge-title">🧭 CNN Fear & Greed Index (시장 심리)</div>
+        <div class="sentiment-card-compact">
+            <div>
+                <div style="font-size: 15.5px; font-weight: 800; color: #ffffff; margin-bottom: 2px;">현재 시장 심리: <span id="fg-text" style="color: var(--color-neon-green);">--</span></div>
+                <div style="font-size: 12px; color: var(--color-text-gray); line-height: 1.4;">
+                    • <span id="fg-desc">CNN Fear & Greed Index 기준</span><br>
+                    <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" class="link-btn" style="margin-top: 4px;">CNN 원문 확인 🔗</a>
+                </div>
+            </div>
+            <div class="gauge-wrapper-sm">
+                <canvas id="gaugeChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section-badge-title">🗺️ 트레이딩 뷰 스타일 마켓 히트맵</div>
+        <div class="heatmap-container-box">
+            <div class="heatmap-sub-tabs">
+                <button class="sub-tab-btn active" onclick="switchHeatmap('domestic', this)">🇰🇷 국내 시장 (석화·반도체·지수)</button>
+                <button class="sub-tab-btn" onclick="switchHeatmap('global', this)">🌍 글로벌 시장 (빅테크·에너지)</button>
+            </div>
+            <div class="heatmap-treemap-grid" id="heatmap-grid"></div>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="stock-input" class="search-input" placeholder="히트맵에 추가할 종목명 입력 (예: POSCO홀딩스, 테슬라)">
+            <button class="button-primary" onclick="addHeatmapStock()">+ 종목 추가</button>
+        </div>
+
+        <!-- 🇺🇸 트럼프 Truth Social 게재글 -->
+        <div class="section-badge-title">🇺🇸 도널드 트럼프 Truth Social 주요 게재글</div>
+        <div class="trump-card">
+            <div class="trump-item">
+                <div class="trump-date">📅 2026년 10월 25일 (Truth Social)</div>
+                <div class="trump-original">"Energy independence is the foundation of national security. High oil prices are ruining our economy. We will DRILL, BABY, DRILL and unleash American energy!"</div>
+                <div class="trump-korean">💬 <b>번역:</b> "에너지 자립은 국가 안보의 기초입니다. 높은 유가가 우리 경제를 망치고 있습니다. 석유 채굴(DRILL, BABY, DRILL)을 대폭 늘려 미국 에너지를 해방시킬 것입니다!"</div>
+            </div>
+            <div class="trump-item">
+                <div class="trump-date">📅 2026년 10월 24일 (Truth Social)</div>
+                <div class="trump-original">"Our manufacturers and farmers are winning again thanks to strong TARIFFS! We will not let foreign countries take advantage of the United States any longer!"</div>
+                <div class="trump-korean">💬 <b>번역:</b> "강력한 관세 정책 덕분에 미국의 제조업체와 농가들이 다시 승리하고 있습니다! 다른 국가들이 미국을 더 이상 이용하게 두지 않을 것입니다!"</div>
+            </div>
+        </div>
+
+        <!-- 📰 뉴스 10개 카드 -->
+        <div class="section-badge-title">📰 글로벌 석화·반도체·매크로 핵심 뉴스 TOP 10</div>
+        <div class="news-container">
+            <div class="news-item-card">
+                <div><span class="news-tag">석유화학</span><div class="news-title">[단독] MOPJ 납사 $942 돌파, 국내 NCC 크래커 마진 방어 비상</div></div>
+                <a href="https://www.google.com/search?query=납사+가격+석유화학+뉴스" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">에너지</span><div class="news-title">WTI 원유 $103 고공행진… 엑슨모빌·셰브론 업스트림 실적 호조</div></div>
+                <a href="https://www.google.com/search?query=WTI+oil+exxonmobil+chevron" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">반도체</span><div class="news-title">SK하이닉스 HBM4 양산 가속화 속 국내 증시 외국인 순매수 유입</div></div>
+                <a href="https://www.google.com/search?query=SK하이닉스+HBM4+주가" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">글로벌 테크</span><div class="news-title">엔비디아 블랙웰 칩 수요 견조… 빅테크 AI 인프라 투자 지속 확대</div></div>
+                <a href="https://www.google.com/search?query=NVIDIA+Blackwell+demand" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">매크로</span><div class="news-title">미국 10년물 국채금리 4.99% 기록, 환율 및 증시 변동성 주의보</div></div>
+                <a href="https://www.google.com/search?query=미국+10년물+국채금리" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">화학전략</span><div class="news-title">범용 석화 부진 타개 위한 고부가 스페셜티·배터리 소재 전환 가속</div></div>
+                <a href="https://www.google.com/search?query=석유화학+스페셜티+소재+전환" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">환율 동향</span><div class="news-title">원/달러 환율 1,320원대 안착 속 수입 원가 부담 및 수출주 영향 분석</div></div>
+                <a href="https://www.google.com/search?query=원달러+환율+전망+뉴스" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">ESG/친환경</span><div class="news-title">글로벌 탄소 국경세 대응 및 친환경 플라스틱 포뮬러 계약 확대</div></div>
+                <a href="https://www.google.com/search?query=친환경+플라스틱+탄소국경세" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">공급망</span><div class="news-title">중동 지정학적 리스크에 따른 해상 운임 및 원유 도입선 다변화 점검</div></div>
+                <a href="https://www.google.com/search?query=중동리스크+해상운임+원유도입" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+            <div class="news-item-card">
+                <div><span class="news-tag">기업 실적</span><div class="news-title">LG화학 및 롯데케미칼 등 주요 석화사 하반기 실적 컨센서스 점검</div></div>
+                <a href="https://www.google.com/search?query=LG화학+롯데케미칼+하반기실적" target="_blank" class="link-btn">기사 검색 🔗</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: 컨설팅 & 비즈니스 전략 영어 (10개 단어 예문 패키지) -->
+    <div id="english-tab" class="tab-content">
+        <div class="section-badge-title">🗣️ 맥킨지 & 글로벌 전략 컨설팅 필수 비즈니스 용어 10선</div>
+        <div class="feature-card">
+            <div style="font-size: 13.5px; color: var(--color-text-gray); margin-bottom: 14px;">McKinsey, BCG, Bain 등 탑티어 컨설팅 및 임원 보고(Executive Reporting) 핵심 표현 패키지입니다.</div>
+            <table>
+                <thead>
+                    <tr><th style="width: 6%;">No</th><th style="width: 22%;">표현 / Term</th><th style="width: 18%;">Pronunciation</th><th style="width: 18%;">뜻 / Meaning</th><th style="width: 36%;">실무 예문 & 해석</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td><b>Value Driver</b></td><td style="color:var(--color-neon-green)">밸류 드라이버</td><td>가치 동인</td><td>Identify core value drivers for growth. (성장을 위한 핵심 가치 동인 식별)</td></tr>
+                    <tr><td>2</td><td><b>Bottom-line Impact</b></td><td style="color:var(--color-neon-green)">바텀라인 임팩트</td><td>최종 손익 영향</td><td>Direct bottom-line impact on net profit. (최종 손익에 직접적 영향)</td></tr>
+                    <tr><td>3</td><td><b>Go-to-Market (GTM)</b></td><td style="color:var(--color-neon-green)">고 투 마켓</td><td>시장 진출 전략</td><td>We are revising GTM strategy for Asia. (아시아 시장 진출 전략 수정 중)</td></tr>
+                    <tr><td>4</td><td><b>Core Competency</b></td><td style="color:var(--color-neon-green)">코어 컴피턴시</td><td>핵심 역량</td><td>Focus heavily on our core competencies. (당사 핵심 역량에 집중 투자)</td></tr>
+                    <tr><td>5</td><td><b>Synergy Realization</b></td><td style="color:var(--color-neon-green)">시너지 리얼라이제이션</td><td>시너지 실현</td><td>Ensure fast synergy realization post-merger. (합병 후 신속한 시너지 실현)</td></tr>
+                    <tr><td>6</td><td><b>Run-rate Optimization</b></td><td style="color:var(--color-neon-green)">런레이트 옵티미제이션</td><td>연간 환산 최적화</td><td>Execute run-rate cost optimization. (연간 환산 비용 최적화 실행)</td></tr>
+                    <tr><td>7</td><td><b>Strategic Pivot</b></td><td style="color:var(--color-neon-green)">스트라테직 피벗</td><td>전략적 전환</td><td>The company made a bold strategic pivot. (대담한 사업 전략적 전환 단행)</td></tr>
+                    <tr><td>8</td><td><b>Best Practice</b></td><td style="color:var(--color-neon-green)">베스트 프랙티스</td><td>모범 사례</td><td>Benchmark industry best practices. (업계 모범 사례 벤치마킹)</td></tr>
+                    <tr><td>9</td><td><b>Portfolio Rationalization</b></td><td style="color:var(--color-neon-green)">포트폴리오 래셔널라이제이션</td><td>포트폴리오 합리화</td><td>Accelerate portfolio rationalization for margin. (마진 개선을 위한 합리화 가속)</td></tr>
+                    <tr><td>10</td><td><b>Executive Summary</b></td><td style="color:var(--color-neon-green)">엑제큐티브 서머리</td><td>임원 요약 보고</td><td>Prepare a concise executive summary. (간결한 임원 보고용 요약본 작성)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+}
+
+function updateWorldClocks() {
+    const now = new Date();
+    document.getElementById('us-time').innerText = new Intl.DateTimeFormat([], { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+    document.getElementById('kst-time').innerText = new Intl.DateTimeFormat([], { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+}
+setInterval(updateWorldClocks, 1000);
+
+/* 🗺️ 히트맵 데이터 */
+let domesticStocks = [];
+
+let globalStocks = [];
+
+let activeHeatmapType = 'domestic';
+
+function renderHeatmap() {
+    const container = document.getElementById('heatmap-grid');
+    if (!container) return;
+    
+    let list = activeHeatmapType === 'domestic' ? 
+        domesticStocks : 
+        globalStocks;
+
+    container.innerHTML = "";
+    list.forEach((item, index) => {
+        const chgNum = parseFloat(item.change.replace(/[^\d.-]/g, ''));
+        let tmClass = chgNum >= 0 ? (chgNum >= 2 ? 'tm-green-strong' : 'tm-green') : (chgNum <= -2 ? 'tm-red-strong' : 'tm-red');
+
+        const tile = document.createElement('div');
+        tile.className = `treemap-tile ${tmClass}`;
+        tile.innerHTML = `
+            <div class="tm-header">
+                <div class="tm-title">${item.name}</div>
+                <button class="tm-del" onclick="removeHeatmapItem(${index})">✕</button>
+            </div>
+            <div>
+                <div class="tm-val">${item.val}</div>
+                <div class="tm-chg ${chgNum >= 0 ? 'change-up' : 'change-down'}">${item.change}</div>
+            </div>
+        `;
+        container.appendChild(tile);
+    });
+}
+
+function switchHeatmap(type, btn) {
+    activeHeatmapType = type;
+    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderHeatmap();
+}
+
+function addHeatmapStock() {
+    const input = document.getElementById('stock-input');
+    const val = input.value.trim();
+    if (!val) return alert("종목명을 입력하세요!");
+
+    let storageKey = activeHeatmapType === 'domestic' ? 'yeris_dom_stocks' : 'yeris_glb_stocks';
+    let list = activeHeatmapType === 'domestic' ? 
+        domesticStocks : 
+        globalStocks;
+
+    const randChg = (Math.random() * 6 - 3).toFixed(2);
+    list.unshift({ name: val, val: "수동 추가", change: "0.00%" });
+
+    localStorage.setItem(storageKey, JSON.stringify(list));
+    input.value = "";
+    renderHeatmap();
+    alert(`[${val}] 종목이 히트맵에 추가되었습니다!`);
+}
+
+function removeHeatmapItem(index) {
+    if (!confirm("이 종목을 삭제하시겠습니까?")) return;
+    let storageKey = activeHeatmapType === 'domestic' ? 'yeris_dom_stocks' : 'yeris_glb_stocks';
+    let list = activeHeatmapType === 'domestic' ? 
+        domesticStocks : 
+        globalStocks;
+
+    list.splice(index, 1);
+    localStorage.setItem(storageKey, JSON.stringify(list));
+    renderHeatmap();
+}
+
+/* 📊 석유화학 및 에너지 중심 1년치 차트 */
+let currentMetric = 'wti';
+let currentPeriod = '1y';
+let myChart = null;
+
+const metricLabels = {
+    wti: 'WTI 원유 ($/bbl)',
+    brent: 'Brent 원유 ($/bbl)',
+    dubai: '두바이유 ($/bbl)',
+    naphtha: 'MOPJ 납사 ($/MT)',
+    spread: '에틸렌-납사 스프레드 ($/MT)',
+    propylene: '프로필렌-납사 스프레드 ($/MT)'
+};
+
+let DATA = null;
+const PERIOD_DAYS = { '3m': 90, '6m': 180, '1y': 365, '2y': 730, 'all': 99999 };
+
+function generateChartData(metric, period) {
+    const src = (DATA && DATA.series && DATA.series[metric]) || { labels: [], values: [] };
+    const c = new Date(); c.setDate(c.getDate() - PERIOD_DAYS[period]);
+    const cut = c.toISOString().split('T')[0];
+    const labels = [], values = [];
+    src.labels.forEach((d, i) => { if (d >= cut) { labels.push(d); values.push(src.values[i]); } });
+    return { labels, values };
+}
+
+function renderMetricCards() {
+    const box = document.getElementById('metric-cards');
+    box.innerHTML = '';
+    Object.keys(metricLabels).forEach(k => {
+        const m = DATA.metrics && DATA.metrics[k];
+        if (!m) return;
+        const up = m.change >= 0;
+        const d = document.createElement('div');
+        d.className = 'chart-header-card' + (k === currentMetric ? ' active' : '');
+        d.onclick = () => selectMetric(k, d);
+        d.innerHTML = `<div class="card-label">${metricLabels[k]}</div>
+            <div class="card-price">${Number(m.price).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+            <div class="card-change ${up ? 'change-up' : 'change-down'}">${up ? '▲' : '▼'} ${Math.abs(m.change).toFixed(2)}%</div>`;
+        box.appendChild(d);
+    });
+}
+
+function renderChart() {
+    const ctx = document.getElementById('marketChart').getContext('2d');
+    const data = generateChartData(currentMetric, currentPeriod);
+
+    if (myChart) myChart.destroy();
+
+    const grad = ctx.createLinearGradient(0, 0, 0, 320);
+    grad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+    grad.addColorStop(1, 'rgba(52, 211, 153, 0.0)');
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: metricLabels[currentMetric],
+                data: data.values,
+                borderColor: '#34d399',
+                borderWidth: 2.5,
+                backgroundColor: grad,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#ffffff', font: { weight: 'bold' } } } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } },
+                y: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#94a3b8' } }
+            }
+        }
+    });
+}
+
+function selectMetric(mKey, btn) {
+    currentMetric = mKey;
+    document.querySelectorAll('#metric-buttons .filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.chart-header-card').forEach(c => c.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderChart();
+}
+
+function changePeriod(pKey, btn) {
+    currentPeriod = pKey;
+    document.querySelectorAll('#period-buttons .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderChart();
+}
+
+/* 🧭 소형 컴팩트 CNN 공포탐욕지수 게이지 차트 */
+function renderGaugeChart() {
+    const sc = (DATA.fear_greed && DATA.fear_greed.score) || 50;
+    const ctx = document.getElementById('gaugeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['점수', '잔여'],
+            datasets: [{
+                data: [sc, 100 - sc],
+                backgroundColor: [sc < 45 ? '#3b82f6' : (sc < 55 ? '#f59e0b' : '#34d399'), '#2a3042'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            rotation: -90,
+            circumference: 180,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
+    });
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+    updateWorldClocks();
+    try {
+        const res = await fetch('data.json?v=' + Date.now());
+        DATA = await res.json();
+    } catch (e) {
+        DATA = { metrics: {}, series: {}, stocks: {} };
+        document.querySelector('.hero-desc').insertAdjacentHTML('afterend', '<div style="color:#f43f5e;font-size:12px">⚠️ data.json을 불러오지 못했습니다</div>');
+    }
+    domesticStocks = (DATA.stocks && DATA.stocks.domestic) || [];
+    globalStocks = (DATA.stocks && DATA.stocks.global) || [];
+    if (DATA.fx) document.getElementById('fx-value').innerText = Number(DATA.fx).toLocaleString(undefined, {maximumFractionDigits: 2}) + ' 원';
+    if (DATA.fear_greed) {
+        document.getElementById('fg-text').innerText = DATA.fear_greed.score + ' (' + DATA.fear_greed.label + ')';
+        document.getElementById('fg-desc').innerText = 'CNN Fear & Greed Index 기준 ' + DATA.fear_greed.score + '점';
+    }
+    if (DATA.updated) document.querySelector('.hero-hologram-badge span').innerHTML = 'PARK YERI &bull; UPDATED ' + DATA.updated;
+    renderMetricCards();
+    renderChart();
+    renderHeatmap();
+    renderGaugeChart();
+});
+</script>
+
+</body>
+</html>
