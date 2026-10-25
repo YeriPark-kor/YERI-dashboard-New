@@ -2,5 +2,13 @@
   "dubai": 111.68,
   "naphtha": 942.76,
   "spread": 210,
-  "propylene": 185
+  "propylene": 185,
+  "fear_greed": {
+    "score": 21,
+    "asof": "2026-10-23",
+    "prev_close": 19,
+    "week": 22,
+    "month": 32,
+    "year": 27
+  }
 }
