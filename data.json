@@ -2,12 +2,12 @@
  "updated": "2026-10-26",
  "metrics": {
   "wti": {
-   "price": 101.17,
-   "change": -2.03
+   "price": 101.22,
+   "change": -1.99
   },
   "brent": {
-   "price": 110.1,
-   "change": -5.67
+   "price": 110.06,
+   "change": -5.71
   }
  },
  "series": {
@@ -1018,7 +1018,7 @@
     97.15,
     99.47,
     103.27,
-    101.17
+    101.22
    ]
   },
   "brent": {
@@ -2028,7 +2028,7 @@
     108.82,
     113.17,
     116.72,
-    110.1
+    110.06
    ]
   }
  },
@@ -2118,9 +2118,9 @@
    }
   ]
  },
- "fx": 1324.56,
+ "fx": 1323.98,
  "fear_greed": {
-  "score": 21,
+  "score": 20,
   "label": "극단적 공포",
   "prev": {
    "close": 21,
@@ -2631,9 +2631,9 @@
     30,
     27,
     19,
-    21,
-    21,
-    21
+    20,
+    20,
+    20
    ]
   },
   "asof": "2026-10-26",
@@ -2726,5 +2726,80 @@
   "Bottom-line impact",
   "Asset rationalization",
   "Sensitivity analysis"
- ]
+ ],
+ "news": {
+  "date": "2026-10-26",
+  "items": [
+   {
+    "title": "신한증권, 석화기업 목표가↓…\"역래깅 회복에도 회복 지연\"",
+    "source": "매일경제 마켓",
+    "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5feWQzU0J6WjZwTFEtLXRCT1Jod0hRcHBLWkpYSzhkYjdVYWN3YVlkb3hkeDFibkM1Wl9KWVlFell4OVRmcmRmM1dEdmhFRDVVMGc?oc=5",
+    "pub": "2026-10-21",
+    "tag": "석유화학"
+   },
+   {
+    "title": "국제유가, 6개월 만의 최고치서 반락…브렌트유 115달러대로",
+    "source": "글로벌이코노믹",
+    "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPX0M0OEx6X3I2UFBkMk0wQ2xWWUVEZU9MclcxRzcxMWdmUGVKLUdIbmNIUm5sRksyZEFldHRZMXF3cHNTRV9QcmdGWW5DSkdKNjhpY2lFaVhFM1hqYU5NQ1RpbVlGaWM5bnd2ZzFabENBUWNJNlc1R2hLNzN0YndzbjBiQjBUUlpi?oc=5",
+    "pub": "2026-10-26",
+    "tag": "에너지"
+   },
+   {
+    "title": "메모리, 3Q도 웃는다…삼성·SK하이닉스 실적표에 쏠린 눈 [반도체레이다]",
+    "source": "디지털데일리",
+    "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE1MQ3JxY1FWOV9hMFg5eEowYVVTNUl0VGpaYXIydzVhQ0tpYWpXRnpmTDJCUkhKNFBiNEVJSXNpeXVyRjRvQ1NyWVM1VWtlclYyTThzckVsMFViMzRJNHI1UU9LOE0?oc=5",
+    "pub": "2026-10-26",
+    "tag": "반도체"
+   },
+   {
+    "title": "빅테크만 웃었다… 일반 기업에 AI는 \"생산성 혁신 아닌 비용 부담\"",
+    "source": "한국일보",
+    "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9GTVVqUi1uNGlxQVY1bGtQTFM2UDE5aDd4cUZLenU4OUVCbnlJTkR5Vk5OQm1kR1hsOS1SbWVUaW1EQ0gzeHN6RjhHN1VlT1VDY0NMdm1mYjkwMW1VQVpGT24yOXlpOVJjYlVwRnVR0gFzQVVfeXFMTjNhWlZ5dnQ0bUdJMDVINUZpb1NKZ2l6WWdiamJTSDJla1R6TnFSOU5iV09hdzNsUXNmTXlMdmRoR1k4NTd1bFFGSUtIdTBqWjEzdzR6Uk03ZlI0bURYM2NvbC1tVVk3YTJsT0YyQ25uWU1kOA?oc=5",
+    "pub": "2026-10-26",
+    "tag": "글로벌 테크"
+   },
+   {
+    "title": "외국인 매수에 국고채 금리 일제히 하락…3년물 두 달 만에 최저",
+    "source": "베타뉴스",
+    "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFA4VzdUTDhVUW1EZDVyOFlEWF9GZmVtY29qcTRGNVFFV196dGNSMjVCbENIYmtRbkV3YUdqRXRVYklIRUFVVWhxNENoYW1rSXM3dTRfRUpTM01ZMU1XWWcwR2VxbDc?oc=5",
+    "pub": "2026-10-26",
+    "tag": "매크로"
+   },
+   {
+    "title": "석화 재편 1호 'H&L 어드밴스드', 첫 공채 진행",
+    "source": "CNB뉴스",
+    "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9RUVF2dHdzYW1DQldKalZMZXBRNUhSWWFfamxzdVY0Vm55RW1MTmNhN1owcUd6Q3U0QlFYQjRFZ0lVeWtGWGRiRVdmRDBiYnVwcTJINVdVLV9qeno4ZEpTUnVIM1I2T1FmazJn?oc=5",
+    "pub": "2026-10-21",
+    "tag": "화학전략"
+   },
+   {
+    "title": "원/달러 환율 1.5원 내린 1,323.1원…연중 저점 또 경신",
+    "source": "연합뉴스",
+    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9CNFhmNmVEUWNvZ0xlLU1Tc091YTNmNzlrdE5Ra3p2N2VOMWYxUGhmN0I0Y0Y3bFpjZ2tMYnlLaS1Va0xCd2ljYklpQnVpeFpCQ3VLM29vZWFCMEHSAWBBVV95cUxPVHRZejR3OG9vYVdFSTJJQXBhRWhFQ1JJeVhUck9jdzMxMUE1Z0JwUEQyQzBnSGpMbldHQll1bmFvWW4wSFFEV1RFTHlveG1ob0VJbXJmX2NEMDNkOHBmUVo?oc=5",
+    "pub": "2026-10-26",
+    "tag": "환율 동향"
+   },
+   {
+    "title": "한국-이탈리아 환경성적표지 상호인정... 유럽 무역장벽 대응 교두보",
+    "source": "파인드비",
+    "link": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE8xWkZ5TTd4T1ZkV2YtRDlzNnpJMzRjRDBIelI4eERWbTBTNk1ZQkJwODZMVUxLTk9pT0FSLVptX09uQ01GX2JXQ3MxaVpHUHpKRmg0eHhjZGtabExPTUxGRW45VnJCZ9IBakFVX3lxTE9iMHhaWmZyWWxCRDR1WVh5RFJ0b0lXMGhNVGFWVW5aaWFTSHh2cW1Tc0duNzk2YmZqR0t3VU1xbE5XWU9zczZjRkg3U3ZPUXJHOVhUbTZuRE9TbkNhTzJBS3FXOGZ0dVFQbXc?oc=5",
+    "pub": "2026-10-22",
+    "tag": "ESG/친환경"
+   },
+   {
+    "title": "“호르무즈 막히면 에너지 공급망 흔들”…수은硏, LNG선·물류 인프라 확충 주문",
+    "source": "해사신문",
+    "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9yWUZHWXJKcG9fckhuUkZBalhxZFlFSjVUSnhxZE8tN08zMjJnMEZPZG1jQ200M1NJVkFnbERITnh4dHFNa1VTbUQyM0VyREF1NDczbFZPZW1DdnRWOWg3ekNNWElZWW16TlVB?oc=5",
+    "pub": "2026-10-26",
+    "tag": "공급망"
+   },
+   {
+    "title": "정유업계 이익 급증 전망…석화는 고가 원료·수요 부진에 회복 제동",
+    "source": "메트로신문",
+    "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9CZHg0aDBJLUZEX3JobTQxanpLd3NReDR3Zk9PSmxTcWl4UmI1R3A1eXA2NFRhclVXS1NnTDRFNVkzZ2dFLVVhX3dTNmM5bXlNWWVUM1AyTFc1dWNxd1lOcQ?oc=5",
+    "pub": "2026-10-26",
+    "tag": "기업 실적"
+   }
+  ]
+ }
 }
