@@ -2,7 +2,7 @@ name: Update dashboard data
 
 on:
   schedule:
-    - cron: "0 23 * * *"   # 매일 한국시간 오전 8시
+    - cron: "30 21 * * *"   # 매일 한국시간 오전 6시 30분
   workflow_dispatch:        # 수동 실행 버튼도 사용 가능
 
 permissions:
