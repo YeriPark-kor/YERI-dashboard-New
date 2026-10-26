@@ -4,7 +4,7 @@ update_data.py
 매일 아침 GitHub 로봇이 실행해서 data.json 파일을 새로 만드는 프로그램입니다.
 대시보드(index.html)는 이 data.json을 읽어서 화면을 그립니다.
 
-가져오는 것: 환율, WTI, Brent(2년치), 국내/글로벌 종목 시세,
+가져오는 것: 환율, WTI, Brent(2년치), 국내/글로벌 종목 시세, CNN 공포탐욕지수,
              영어 표현 10선(Gemini AI가 매일 새로 작성)
 (두바이유, MOPJ 납사, 스프레드, 공포탐욕지수는 제외하기로 했어요)
 
@@ -27,6 +27,8 @@ TODAY = datetime.now(KST).strftime("%Y-%m-%d")
 # 1) 가져올 목록 (화면에 보일 이름, 야후 파이낸스 코드, 표시 형식)
 #    종목을 바꾸고 싶으면 이 목록만 고치면 돼요.
 # ---------------------------------------------------------------
+CNN_URL = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
+
 OIL = {"wti": "CL=F", "brent": "BZ=F"}
 
 DOMESTIC = [
@@ -103,6 +105,87 @@ def format_value(kind, price):
     if kind == "usd":
         return f"${price:,.2f}"
     return f"{price:,.2f}"
+
+
+def fear_greed_label(score):
+    if score < 25:
+        return "극단적 공포"
+    if score < 45:
+        return "공포"
+    if score < 55:
+        return "중립"
+    if score < 75:
+        return "탐욕"
+    return "극단적 탐욕"
+
+
+def fetch_fear_greed_from_cnn():
+    """CNN에서 공포탐욕지수(현재값, 비교값, 1년 추이)를 가져와요."""
+    req = urllib.request.Request(
+        CNN_URL,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+            ),
+            "Accept": "application/json",
+            "Origin": "https://edition.cnn.com",
+            "Referer": "https://edition.cnn.com/",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=20) as res:
+        raw = json.load(res)
+
+    now = raw["fear_and_greed"]
+    score = round(float(now["score"]))
+
+    prev = {}
+    for key, src in [
+        ("close", "previous_close"),
+        ("week", "previous_1_week"),
+        ("month", "previous_1_month"),
+        ("year", "previous_1_year"),
+    ]:
+        if now.get(src) is not None:
+            prev[key] = round(float(now[src]))
+
+    points = raw.get("fear_and_greed_historical", {}).get("data", [])[-365:]
+    history = {
+        "labels": [
+            datetime.fromtimestamp(p["x"] / 1000, timezone.utc).strftime("%Y-%m-%d")
+            for p in points
+        ],
+        "values": [round(float(p["y"])) for p in points],
+    }
+
+    return {
+        "score": score,
+        "label": fear_greed_label(score),
+        "prev": prev,
+        "history": history,
+        "asof": str(now.get("timestamp", TODAY))[:10],
+        "source": "cnn",
+        "fetched": TODAY,
+    }
+
+
+def fear_greed_from_manual():
+    """CNN이 막혔을 때를 위한 대비책: manual.json의 fear_greed 값을 써요."""
+    raw = load_json("manual.json", {})
+    m = raw.get("fear_greed") if isinstance(raw, dict) else None
+    if isinstance(m, dict) and m.get("score") is not None:
+        score = round(float(m["score"]))
+        result = {
+            "score": score,
+            "label": fear_greed_label(score),
+            "asof": m.get("asof", TODAY),
+            "source": "manual",
+            "fetched": TODAY,
+        }
+        if isinstance(m.get("prev"), dict):
+            result["prev"] = m["prev"]
+        return result
+    return None
 
 
 # ---------------------------------------------------------------
@@ -237,6 +320,23 @@ def main():
                     rows.append(old_by_name[name])
         data["stocks"][group] = rows
     print("종목 OK:", {k: len(v) for k, v in data["stocks"].items()})
+
+    # 공포탐욕지수: CNN -> manual.json -> 어제 값 순서로 시도
+    try:
+        data["fear_greed"] = fetch_fear_greed_from_cnn()
+        print("공포탐욕지수 OK (CNN):", data["fear_greed"]["score"])
+    except Exception as e:
+        problems.append(f"CNN 공포탐욕지수 실패: {e}")
+        manual = fear_greed_from_manual()
+        if manual:
+            data["fear_greed"] = manual
+            print("공포탐욕지수: manual.json 값 사용")
+        elif old.get("fear_greed"):
+            kept = dict(old["fear_greed"])
+            # 옛 값이라는 표시를 위해 fetched를 옛 날짜로 둬요 (화면에 경고가 떠요)
+            kept.setdefault("fetched", old.get("updated"))
+            data["fear_greed"] = kept
+            print("공포탐욕지수: 어제 값 유지")
 
     # 영어 표현 10선 (Gemini)
     try:
