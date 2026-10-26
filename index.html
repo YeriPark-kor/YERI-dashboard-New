@@ -477,7 +477,7 @@
                 <thead>
                     <tr><th style="width: 6%;">No</th><th style="width: 22%;">표현 / Term</th><th style="width: 18%;">Pronunciation</th><th style="width: 18%;">뜻 / Meaning</th><th style="width: 36%;">실무 예문 & 해석</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="english-body">
                     <tr><td>1</td><td><b>Value Driver</b></td><td style="color:var(--color-neon-green)">밸류 드라이버</td><td>가치 동인</td><td>Identify core value drivers for growth. (성장을 위한 핵심 가치 동인 식별)</td></tr>
                     <tr><td>2</td><td><b>Bottom-line Impact</b></td><td style="color:var(--color-neon-green)">바텀라인 임팩트</td><td>최종 손익 영향</td><td>Direct bottom-line impact on net profit. (최종 손익에 직접적 영향)</td></tr>
                     <tr><td>3</td><td><b>Go-to-Market (GTM)</b></td><td style="color:var(--color-neon-green)">고 투 마켓</td><td>시장 진출 전략</td><td>We are revising GTM strategy for Asia. (아시아 시장 진출 전략 수정 중)</td></tr>
@@ -488,7 +488,7 @@
                     <tr><td>8</td><td><b>Best Practice</b></td><td style="color:var(--color-neon-green)">베스트 프랙티스</td><td>모범 사례</td><td>Benchmark industry best practices. (업계 모범 사례 벤치마킹)</td></tr>
                     <tr><td>9</td><td><b>Portfolio Rationalization</b></td><td style="color:var(--color-neon-green)">포트폴리오 래셔널라이제이션</td><td>포트폴리오 합리화</td><td>Accelerate portfolio rationalization for margin. (마진 개선을 위한 합리화 가속)</td></tr>
                     <tr><td>10</td><td><b>Executive Summary</b></td><td style="color:var(--color-neon-green)">엑제큐티브 서머리</td><td>임원 요약 보고</td><td>Prepare a concise executive summary. (간결한 임원 보고용 요약본 작성)</td></tr>
-                </tbody>
+                <tbody id="english-body">
             </table>
         </div>
     </div>
@@ -753,7 +753,14 @@ function renderFgChart() {
         }
     });
 }
-
+function renderEnglish() {
+    const items = DATA.english && DATA.english.items;
+    if (!items || !items.length) return;   // 데이터가 없으면 기존 표를 그대로 둬요
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    document.getElementById('english-body').innerHTML = items.map((it, i) =>
+        `<tr><td>${i + 1}</td><td><b>${esc(it.term)}</b></td><td style="color:var(--color-neon-green)">${esc(it.pron)}</td><td>${esc(it.meaning)}</td><td>${esc(it.example)} (${esc(it.example_ko)})</td></tr>`
+    ).join('');
+}
 window.addEventListener('DOMContentLoaded', async () => {
     updateWorldClocks();
     try {
@@ -770,6 +777,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderMetricCards();
     renderChart();
     renderHeatmap();
+    renderEnglish();
     renderFearGreed();
 });
 </script>
