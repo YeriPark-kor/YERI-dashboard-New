@@ -2,12 +2,12 @@
  "updated": "2026-10-26",
  "metrics": {
   "wti": {
-   "price": 101.19,
-   "change": -2.01
+   "price": 100.98,
+   "change": -2.22
   },
   "brent": {
-   "price": 110.08,
-   "change": -5.69
+   "price": 109.99,
+   "change": -5.77
   }
  },
  "series": {
@@ -1018,7 +1018,7 @@
     97.15,
     99.47,
     103.27,
-    101.19
+    100.98
    ]
   },
   "brent": {
@@ -2028,7 +2028,7 @@
     108.82,
     113.17,
     116.72,
-    110.08
+    109.99
    ]
   }
  },
@@ -2118,7 +2118,7 @@
    }
   ]
  },
- "fx": 1324.67,
+ "fx": 1324.34,
  "fear_greed": {
   "score": 22,
   "label": "극단적 공포",
@@ -2783,9 +2783,9 @@
     "tag": "화학전략"
    },
    {
-    "title": "원/달러 환율 1.5원 내린 1,323.1원…연중 저점 또 경신",
-    "source": "연합뉴스",
-    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9CNFhmNmVEUWNvZ0xlLU1Tc091YTNmNzlrdE5Ra3p2N2VOMWYxUGhmN0I0Y0Y3bFpjZ2tMYnlLaS1Va0xCd2ljYklpQnVpeFpCQ3VLM29vZWFCMEHSAWBBVV95cUxPVHRZejR3OG9vYVdFSTJJQXBhRWhFQ1JJeVhUck9jdzMxMUE1Z0JwUEQyQzBnSGpMbldHQll1bmFvWW4wSFFEV1RFTHlveG1ob0VJbXJmX2NEMDNkOHBmUVo?oc=5",
+    "title": "’1,310원대 근접’ 원·달러 환율…명목실효환율 2년 만에 최고",
+    "source": "연합뉴스TV",
+    "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE93M1h6SUhDYnRsN0dpNFRkQU5hOEI1Zzc2MXVwbnlWQkdpS0dPTTJiQTlBU3pJQXRXWGlqQjFVMk1tM2RJR0NWc2U1S1VtZVJhalBKMUlZSEJoR2pkOUg4eDdkS2JMdHM?oc=5",
     "pub": "2026-10-26",
     "tag": "환율 동향"
    },
