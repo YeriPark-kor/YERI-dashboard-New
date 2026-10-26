@@ -1,250 +1,289 @@
-<!DOCTYPE html>
-<html lang="ko" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YERI's Today - Executive Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0fdf4',
-              500: '#22c55e',
-              600: '#16a34a',
-              900: '#14532d',
-            }
-          }
-        }
-      }
+# -*- coding: utf-8 -*-
+import json
+import os
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timedelta, timezone
+
+import yfinance as yf
+
+# 한국 시간 기준 오늘 날짜
+KST = timezone(timedelta(hours=9))
+TODAY = datetime.now(KST).strftime("%Y-%m-%d")
+
+CNN_URL = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
+
+OIL = {"wti": "CL=F", "brent": "BZ=F"}
+
+NEWS_TOPICS = [
+    ("석유화학", "납사 에틸렌 석유화학"),
+    ("에너지", "국제유가 WTI 브렌트"),
+    ("반도체", "SK하이닉스 삼성전자 HBM 반도체"),
+    ("글로벌 테크", "엔비디아 AI 인프라 빅테크"),
+    ("매크로", "미국 국채금리 연준 증시"),
+    ("화학전략", "석유화학 구조조정 스페셜티"),
+    ("환율 동향", "원달러 환율"),
+    ("ESG/친환경", "탄소국경세 친환경 플라스틱"),
+    ("공급망", "중동 해상운임 원유 공급망"),
+    ("기업 실적", "LG화학 롯데케미칼 실적"),
+]
+
+DOMESTIC = [
+    ("KOSPI", "^KS11", "index"),
+    ("KOSDAQ", "^KQ11", "index"),
+    ("SK하이닉스", "000660.KS", "won"),
+    ("삼성전자", "005930.KS", "won"),
+    ("LG화학", "051910.KS", "won"),
+    ("금호석유", "011780.KS", "won"),
+    ("S-Oil", "010950.KS", "won"),
+    ("롯데케미칼", "011170.KS", "won"),
+]
+
+GLOBAL = [
+    ("S&P 500", "^GSPC", "index"),
+    ("NVIDIA", "NVDA", "usd"),
+    ("Apple", "AAPL", "usd"),
+    ("Microsoft", "MSFT", "usd"),
+    ("Alphabet", "GOOGL", "usd"),
+    ("ExxonMobil", "XOM", "usd"),
+    ("Chevron", "CVX", "usd"),
+    ("TSMC", "TSM", "usd"),
+]
+
+def load_json(path, default):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+def get_closes(ticker, period):
+    df = yf.Ticker(ticker).history(period=period, auto_adjust=False)
+    closes = df["Close"].dropna()
+    if len(closes) < 2:
+        raise ValueError(f"{ticker}: 데이터가 부족해요")
+    return closes
+
+def fetch_oil(ticker):
+    closes = get_closes(ticker, "2y")
+    labels = [d.strftime("%Y-%m-%d") for d in closes.index]
+    values = [round(float(v), 2) for v in closes.values]
+    us_today = (datetime.now(timezone.utc) - timedelta(hours=5)).strftime("%Y-%m-%d")
+    while len(labels) > 2 and labels[-1] > us_today:
+        labels.pop()
+        values.pop()
+    price = values[-1]
+    change = round((values[-1] / values[-2] - 1) * 100, 2)
+    return {"labels": labels, "values": values}, {"price": price, "change": change}
+
+def fetch_quote(ticker):
+    closes = get_closes(ticker, "10d")
+    last, prev = float(closes.iloc[-1]), float(closes.iloc[-2])
+    return last, (last / prev - 1) * 100
+
+def format_value(kind, price):
+    if kind == "won":
+        return f"{price:,.0f}원"
+    if kind == "usd":
+        return f"${price:,.2f}"
+    return f"{price:,.2f}"
+
+def fear_greed_label(score):
+    if score < 25: return "극단적 공포"
+    if score < 45: return "공포"
+    if score < 55: return "중립"
+    if score < 75: return "탐욕"
+    return "극단적 탐욕"
+
+def fetch_fear_greed_from_cnn():
+    req = urllib.request.Request(
+        CNN_URL,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36",
+            "Accept": "application/json",
+            "Origin": "https://edition.cnn.com",
+            "Referer": "https://edition.cnn.com/",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=20) as res:
+        raw = json.load(res)
+    now = raw["fear_and_greed"]
+    score = round(float(now["score"]))
+    prev = {}
+    for key, src in [("close", "previous_close"), ("week", "previous_1_week"), ("month", "previous_1_month"), ("year", "previous_1_year")]:
+        if now.get(src) is not None:
+            prev[key] = round(float(now[src]))
+    points = raw.get("fear_and_greed_historical", {}).get("data", [])[-365:]
+    history = {
+        "labels": [datetime.fromtimestamp(p["x"] / 1000, timezone.utc).strftime("%Y-%m-%d") for p in points],
+        "values": [round(float(p["y"])) for p in points],
     }
-  </script>
-  <style>
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    body { font-family: 'Pretendard', sans-serif; }
-  </style>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-12">
-
-  <!-- Header -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="text-2xl">📊</span>
-        <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
-          YERI's Today
-        </h1>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Executive Briefing</span>
-      </div>
-      <div class="text-xs text-slate-400 flex items-center gap-2">
-        <span>최종 갱신:</span>
-        <span id="last-updated" class="font-mono text-slate-200">-</span>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
-
-    <!-- Key Takeaways & Market Briefing -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Key Takeaways -->
-      <div class="bg-slate-800/60 rounded-2xl p-6 border border-slate-700/50 shadow-xl backdrop-blur-sm">
-        <h2 class="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-          <span>📌</span> Today's Key Takeaways (마케팅 및 사업 전략)
-        </h2>
-        <ul class="space-y-3 text-slate-300 text-sm leading-relaxed">
-          <li class="flex items-start gap-2">
-            <span class="text-emerald-400 font-bold">•</span>
-            <span><strong>유가 변동성 대응 마케팅:</strong> WTI·브렌트유 등락에 따른 원가 압박 요인을 선제 분석하고, 주요 고객사 대상 판가 연동 구조 및 재고 최적화 커뮤니케이션 강화</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-emerald-400 font-bold">•</span>
-            <span><strong>스페셜티 포트폴리오 소통:</strong> 범용 석유화학 시황 둔화 국면 타개를 위한 고부가 친환경 소재 및 친환경 플라스틱 라인업의 차별적 가치 집중 홍보</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-emerald-400 font-bold">•</span>
-            <span><strong>실시간 대시보드 기반 민첩성:</strong> 환율, 유가, 공포탐욕지수 등 매크로 지표 변동에 맞춰 영업 전략 및 타겟 마켓 세분화 대응 속도 극대화</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- 데일리 마켓 브리핑 인사이트 -->
-      <div class="bg-slate-800/60 rounded-2xl p-6 border border-slate-700/50 shadow-xl backdrop-blur-sm">
-        <h2 class="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
-          <span>📑</span> 데일리 석유화학 & 원자재 마켓 브리핑 인사이트
-        </h2>
-        <blockquote class="border-l-4 border-blue-500 pl-4 py-1 text-slate-300 italic text-sm leading-relaxed mb-3">
-          "매크로 불확실성 속 기초소재 원가 방어와 고부가 스페셜티 전환의 기로"
-        </blockquote>
-        <p class="text-slate-300 text-sm leading-relaxed">
-          최근 글로벌 에너지 시장은 WTI 및 브렌트유의 변동성이 확대되면서 석유화학 업계의 기초 원가(나프타 등) 부담을 가중시키고 있습니다. 범용 제품 중심의 스프레드가 제한적인 상황에서, 단기적인 시황 방어와 함께 장기적인 스페셜티·친환경 소재 포트폴리오 전환의 실행력이 어느 때보다 중요해졌습니다. 특히 주요 고객사들과의 소통 과정에서 원가 연동 구조의 투명성을 높이고, 고부가 가치 제품군의 경쟁 우위를 데이터 기반으로 입증하는 마케팅 전략이 핵심 경쟁력이 될 것입니다.
-        </p>
-      </div>
-    </section>
-
-    <!-- Macro Indicators Summary (FX, WTI, Brent, Fear & Greed) -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
-        <div class="text-xs text-slate-400 mb-1">원/달러 환율 (KRW)</div>
-        <div id="fx-val" class="text-2xl font-bold font-mono text-slate-100">-</div>
-      </div>
-      <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
-        <div class="text-xs text-slate-400 mb-1">WTI유 ($/bbl)</div>
-        <div class="flex items-baseline justify-between">
-          <span id="wti-price" class="text-2xl font-bold font-mono text-slate-100">-</span>
-          <span id="wti-change" class="text-sm font-semibold font-mono">-</span>
-        </div>
-      </div>
-      <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
-        <div class="text-xs text-slate-400 mb-1">Brent유 ($/bbl)</div>
-        <div class="flex items-baseline justify-between">
-          <span id="brent-price" class="text-2xl font-bold font-mono text-slate-100">-</span>
-          <span id="brent-change" class="text-sm font-semibold font-mono">-</span>
-        </div>
-      </div>
-      <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
-        <div class="text-xs text-slate-400 mb-1">Fear & Greed 지수</div>
-        <div class="flex items-baseline justify-between">
-          <span id="fg-score" class="text-2xl font-bold font-mono text-emerald-400">-</span>
-          <span id="fg-label" class="text-xs font-medium text-slate-300">-</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Stock Heatmap Section -->
-    <section class="bg-slate-800/60 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-      <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-        <span>📈</span> 주요 종목 시세 (Heatmap)
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 class="text-sm font-medium text-slate-400 mb-3">국내 주식 & 지수</h3>
-          <div id="domestic-stocks" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-        </div>
-        <div>
-          <h3 class="text-sm font-medium text-slate-400 mb-3">글로벌 테크 & 에너지</h3>
-          <div id="global-stocks" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- News & English Topics -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- News TOP 10 -->
-      <div class="lg:col-span-2 bg-slate-800/60 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-        <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-          <span>📰</span> 글로벌 & 석유화학 주요 뉴스
-        </h2>
-        <div id="news-list" class="space-y-3"></div>
-      </div>
-
-      <!-- Business English -->
-      <div class="bg-slate-800/60 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-        <h2 class="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
-          <span>💡</span> Business English 10
-        </h2>
-        <div id="english-list" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"></div>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    async function loadDashboardData() {
-      try {
-        const res = await fetch('data.json');
-        if (!res.ok) throw new Error('Data load failed');
-        const data = await res.json();
-
-        // 1. Updated Time & FX
-        document.getElementById('last-updated').innerText = data.updated || '-';
-        document.getElementById('fx-val').innerText = data.fx ? `${data.fx.toLocaleString()} 원` : '-';
-
-        // 2. Oil Metrics
-        if (data.metrics) {
-          if (data.metrics.wti) {
-            document.getElementById('wti-price').innerText = `$${data.metrics.wti.price}`;
-            const wtiChg = document.getElementById('wti-change');
-            wtiChg.innerText = `${data.metrics.wti.change >= 0 ? '+' : ''}${data.metrics.wti.change}%`;
-            wtiChg.className = `text-sm font-semibold font-mono ${data.metrics.wti.change >= 0 ? 'text-red-400' : 'text-blue-400'}`;
-          }
-          if (data.metrics.brent) {
-            document.getElementById('brent-price').innerText = `$${data.metrics.brent.price}`;
-            const brentChg = document.getElementById('brent-change');
-            brentChg.innerText = `${data.metrics.brent.change >= 0 ? '+' : ''}${data.metrics.brent.change}%`;
-            brentChg.className = `text-sm font-semibold font-mono ${data.metrics.brent.change >= 0 ? 'text-red-400' : 'text-blue-400'}`;
-          }
-        }
-
-        // 3. Fear & Greed
-        if (data.fear_greed) {
-          document.getElementById('fg-score').innerText = data.fear_greed.score || '-';
-          document.getElementById('fg-label').innerText = data.fear_greed.label || '';
-        }
-
-        // 4. Stock Heatmaps
-        const renderStocks = (containerId, stocks) => {
-          const container = document.getElementById(containerId);
-          if (!container || !stocks) return;
-          container.innerHTML = stocks.map(s => {
-            const isUp = s.change && s.change.startsWith('+');
-            const bgClass = isUp ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20';
-            const textClass = isUp ? 'text-red-400' : 'text-blue-400';
-            return `
-              <div class="${bgClass} border rounded-xl p-3 flex flex-col justify-between">
-                <span class="text-xs text-slate-400 font-medium truncate">${s.name}</span>
-                <span class="text-sm font-bold font-mono text-slate-200 mt-1">${s.val}</span>
-                <span class="text-xs font-semibold font-mono ${textClass} mt-0.5">${s.change}</span>
-              </div>
-            `;
-          }).join('');
-        };
-
-        if (data.stocks) {
-          renderStocks('domestic-stocks', data.stocks.domestic);
-          renderStocks('global-stocks', data.stocks.global);
-        }
-
-        // 5. News List
-        const newsContainer = document.getElementById('news-list');
-        if (newsContainer && data.news && data.news.items) {
-          newsContainer.innerHTML = data.news.items.map(n => `
-            <a href="${n.link}" target="_blank" class="block p-3 rounded-xl bg-slate-700/30 hover:bg-slate-700/60 transition border border-slate-700/40">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-xs px-2 py-0.5 rounded bg-slate-600/50 text-emerald-300 font-medium">${n.tag || '뉴스'}</span>
-                <span class="text-xs text-slate-400">${n.source || ''}</span>
-              </div>
-              <h3 class="text-sm font-medium text-slate-200 mt-1 hover:text-emerald-400 transition leading-snug">${n.title}</h3>
-            </a>
-          `).join('');
-        }
-
-        // 6. Business English
-        const englishContainer = document.getElementById('english-list');
-        if (englishContainer && data.english && data.english.items) {
-          englishContainer.innerHTML = data.english.items.map((item, idx) => `
-            <div class="p-3 rounded-xl bg-slate-700/30 border border-slate-700/40 space-y-1">
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-amber-300 text-sm">${idx + 1}. ${item.term}</span>
-                <span class="text-xs text-slate-400">[${item.pron}]</span>
-              </div>
-              <p class="text-xs font-medium text-emerald-400">${item.meaning}</p>
-              <p class="text-xs text-slate-300 italic">"${item.example}"</p>
-              <p class="text-xs text-slate-400">${item.example_ko}</p>
-            </div>
-          `).join('');
-        }
-
-      } catch (err) {
-        console.error('대시보드 데이터 연동 오류:', err);
-      }
+    return {
+        "score": score,
+        "label": fear_greed_label(score),
+        "prev": prev,
+        "history": history,
+        "asof": str(now.get("timestamp", TODAY))[:10],
+        "source": "cnn",
+        "fetched": TODAY,
     }
 
-    document.addEventListener('DOMContentLoaded', loadDashboardData);
-  </script>
-</body>
-</html>
+def fear_greed_from_manual():
+    raw = load_json("manual.json", {})
+    m = raw.get("fear_greed") if isinstance(raw, dict) else None
+    if isinstance(m, dict) and m.get("score") is not None:
+        score = round(float(m["score"]))
+        result = {"score": score, "label": fear_greed_label(score), "asof": m.get("asof", TODAY), "source": "manual", "fetched": TODAY}
+        if isinstance(m.get("prev"), dict): result["prev"] = m["prev"]
+        return result
+    return None
+
+GEMINI_MODELS = [m for m in [os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-3.6-flash"] if m]
+
+def ask_gemini_json(prompt):
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY가 설정되지 않았어요")
+    body = json.dumps({"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"responseMimeType": "application/json", "temperature": 0.8}}).encode("utf-8")
+    last_err = None
+    for model in GEMINI_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", "x-goog-api-key": key})
+        try:
+            with urllib.request.urlopen(req, timeout=90) as res:
+                raw = json.load(res)
+            parts = raw["candidates"][0]["content"]["parts"]
+            text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+            if text.startswith("```"):
+                text = text.strip("`")
+                if text.lower().startswith("json"): text = text[4:]
+            return json.loads(text)
+        except Exception as e:
+            last_err = f"{model}: {e}"
+    raise RuntimeError(last_err)
+
+ENGLISH_FIELDS = ("term", "pron", "meaning", "example", "example_ko")
+
+def make_english(old):
+    used = old.get("english_used", [])
+    prompt = (
+        "당신은 글로벌 전략 컨설팅 출신 비즈니스 영어 코치입니다. B2B 소재·석유화학 업계 실무자가 임원 보고에서 쓸 수 있는 "
+        "컨설팅 비즈니스 영어 표현 10개를 만들어 주세요.\n"
+        '반드시 이 JSON 형식으로만 답하세요: {"items":[{"term":"","pron":"","meaning":"","example":"","example_ko":""}]}\n'
+        "이미 사용한 표현: " + json.dumps(used, ensure_ascii=False)
+    )
+    result = ask_gemini_json(prompt)
+    items = result.get("items") if isinstance(result, dict) else result
+    clean = []
+    for it in items or []:
+        if isinstance(it, dict) and all(str(it.get(k, "")).strip() for k in ENGLISH_FIELDS):
+            clean.append({k: str(it[k]).strip() for k in ENGLISH_FIELDS})
+    if len(clean) < 10: raise ValueError("유효 표현 부족")
+    clean = clean[:10]
+    used_new = ([c["term"] for c in clean] + used)[:100]
+    return {"date": TODAY, "items": clean}, used_new
+
+def fetch_news_item(query, used_titles):
+    for window in ("2d", "7d"):
+        q = urllib.parse.quote(f"{query} when:{window}")
+        url = f"[https://news.google.com/rss/search?q=](https://news.google.com/rss/search?q=){q}&hl=ko&gl=KR&ceid=KR:ko"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36"})
+        with urllib.request.urlopen(req, timeout=20) as res:
+            root = ET.fromstring(res.read())
+        for item in root.iter("item"):
+            title = (item.findtext("title") or "").strip()
+            link = (item.findtext("link") or "").strip()
+            src = item.find("source")
+            source = (src.text or "").strip() if src is not None and src.text else ""
+            if source and title.endswith(" - " + source): title = title[: -len(" - " + source)].strip()
+            if not title or not link.startswith("http") or title in used_titles: continue
+            pub = ""
+            try: pub = parsedate_to_datetime(item.findtext("pubDate")).astimezone(KST).strftime("%Y-%m-%d")
+            except Exception: pass
+            return {"title": title, "source": source, "link": link, "pub": pub}
+    raise ValueError("검색 결과 없음")
+
+def make_news(old):
+    old_by_tag = {n.get("tag"): n for n in (old.get("news") or {}).get("items", [])}
+    items, used, problems = [], set(), []
+    for tag, query in NEWS_TOPICS:
+        try:
+            art = fetch_news_item(query, used)
+            art["tag"] = tag
+            used.add(art["title"])
+            items.append(art)
+        except Exception as e:
+            problems.append(f"뉴스[{tag}] 실패: {e}")
+            if tag in old_by_tag: items.append(old_by_tag[tag])
+    if not items: raise RuntimeError("뉴스 수집 실패")
+    return {"date": TODAY, "items": items}, problems
+
+def main():
+    old = load_json("data.json", {})
+    data = {"updated": TODAY, "metrics": {}, "series": {}, "stocks": {}}
+    problems = []
+
+    try:
+        data["fx"] = round(float(get_closes("KRW=X", "10d").iloc[-1]), 2)
+    except Exception as e:
+        data["fx"] = old.get("fx")
+        problems.append(f"환율 실패: {e}")
+
+    oil_ok = 0
+    for key, ticker in OIL.items():
+        try:
+            series, metric = fetch_oil(ticker)
+            data["series"][key] = series
+            data["metrics"][key] = metric
+            oil_ok += 1
+        except Exception as e:
+            if key in old.get("series", {}): data["series"][key] = old["series"][key]
+            if key in old.get("metrics", {}): data["metrics"][key] = old["metrics"][key]
+            problems.append(f"{key} 실패: {e}")
+
+    for group, items in [("domestic", DOMESTIC), ("global", GLOBAL)]:
+        old_by_name = {s.get("name"): s for s in old.get("stocks", {}).get(group, [])}
+        rows = []
+        for name, ticker, kind in items:
+            try:
+                price, pct = fetch_quote(ticker)
+                rows.append({"name": name, "val": format_value(kind, price), "change": f"{pct:+.2f}%"})
+            except Exception as e:
+                problems.append(f"{name} 실패: {e}")
+                if name in old_by_name: rows.append(old_by_name[name])
+        data["stocks"][group] = rows
+
+    try:
+        data["fear_greed"] = fetch_fear_greed_from_cnn()
+    except Exception as e:
+        problems.append(f"CNN 공포탐욕지수 실패: {e}")
+        manual = fear_greed_from_manual()
+        if manual: data["fear_greed"] = manual
+        elif old.get("fear_greed"): data["fear_greed"] = dict(old["fear_greed"])
+
+    try:
+        data["english"], data["english_used"] = make_english(old)
+    except Exception as e:
+        problems.append(f"영어 표현 실패: {e}")
+        if old.get("english"): data["english"] = old["english"]
+        if old.get("english_used"): data["english_used"] = old["english_used"]
+
+    try:
+        data["news"], news_problems = make_news(old)
+        problems.extend(news_problems)
+    except Exception as e:
+        problems.append(f"뉴스 실패: {e}")
+        if old.get("news"): data["news"] = old["news"]
+
+    with open("data.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+
+    if oil_ok == 0:
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
