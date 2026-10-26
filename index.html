@@ -231,7 +231,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="news-container" id="news-grid">
     
     <!-- 🌌 히어로 배너 (실시간 갱신 버튼 삭제 완료) -->
     <div class="hero-banner">
@@ -761,6 +761,19 @@ function renderEnglish() {
         `<tr><td>${i + 1}</td><td><b>${esc(it.term)}</b></td><td style="color:var(--color-neon-green)">${esc(it.pron)}</td><td>${esc(it.meaning)}</td><td>${esc(it.example)} (${esc(it.example_ko)})</td></tr>`
     ).join('');
 }
+    function renderNews() {
+    const items = DATA.news && DATA.news.items;
+    if (!items || !items.length) return;   // 데이터가 없으면 기존 카드를 그대로 둬요
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    document.getElementById('news-grid').innerHTML = items.map(n => {
+        const safe = String(n.link).startsWith('http');
+        const meta = [n.source, n.pub].filter(Boolean).join(' · ');
+        return `<div class="news-item-card">
+            <div><span class="news-tag">${esc(n.tag)}</span><div class="news-title">${esc(n.title)}</div></div>
+            ${safe ? `<a href="${esc(n.link)}" target="_blank" rel="noopener" class="link-btn">${esc(meta || '기사 보기')} 🔗</a>` : ''}
+        </div>`;
+    }).join('');
+}
 window.addEventListener('DOMContentLoaded', async () => {
     updateWorldClocks();
     try {
@@ -778,6 +791,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderChart();
     renderHeatmap();
     renderEnglish();
+    renderNews();
     renderFearGreed();
 });
 </script>
