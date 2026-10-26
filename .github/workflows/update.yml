@@ -1,31 +1,36 @@
-name: Update dashboard data
+name: Daily Market Data Update
 
 on:
   schedule:
-    - cron: "30 21 * * *"   # 매일 한국시간 오전 6시 30분
-  workflow_dispatch:        # 수동 실행 버튼도 사용 가능
+    - cron: '0 23 * * *' # UTC 기준 매일 밤 11시 (한국 시간 아침 8시 자동 실행)
+  workflow_dispatch: # 수동으로 언제든 실행 가능
 
 permissions:
   contents: write
 
 jobs:
-  update:
+  update-data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install yfinance
-      - run: python update_data.py
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      - name: Commit changes
+          python-version: '3.10'
+
+      - name: Install dependencies
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@users.noreply.github.com"
+          pip install yfinance pytz
+
+      - name: Run update script
+        run: |
+          python update_data.py
+
+      - name: Commit and push if changes exist
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
           git add data.json
-          if ! git diff --staged --quiet; then
-            git commit -m "daily data update"
-            git push
-          fi
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update market data.json [skip ci]" && git push)
