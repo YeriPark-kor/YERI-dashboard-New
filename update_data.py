@@ -4,13 +4,16 @@ update_data.py
 매일 아침 GitHub 로봇이 실행해서 data.json 파일을 새로 만드는 프로그램입니다.
 대시보드(index.html)는 이 data.json을 읽어서 화면을 그립니다.
 
-가져오는 것: 환율, WTI, Brent(2년치), 국내/글로벌 종목 시세, CNN 공포탐욕지수
-(두바이유, MOPJ 납사, 스프레드는 제외하기로 했어요)
+가져오는 것: 환율, WTI, Brent(2년치), 국내/글로벌 종목 시세,
+             영어 표현 10선(Gemini AI가 매일 새로 작성)
+(두바이유, MOPJ 납사, 스프레드, 공포탐욕지수는 제외하기로 했어요)
 
 어떤 항목이 실패해도 전체가 멈추지 않고, 실패한 항목은 어제 값을 그대로 둡니다.
 """
 import json
+import os
 import sys
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -47,8 +50,6 @@ GLOBAL = [
     ("Chevron", "CVX", "usd"),
     ("TSMC", "TSM", "usd"),
 ]
-
-CNN_URL = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
 
 
 # ---------------------------------------------------------------
@@ -104,85 +105,88 @@ def format_value(kind, price):
     return f"{price:,.2f}"
 
 
-def fear_greed_label(score):
-    if score < 25:
-        return "극단적 공포"
-    if score < 45:
-        return "공포"
-    if score < 55:
-        return "중립"
-    if score < 75:
-        return "탐욕"
-    return "극단적 탐욕"
+# ---------------------------------------------------------------
+# 2-2) Gemini AI 도우미 (영어 표현처럼 AI가 쓰는 글에 사용)
+#      API 키는 코드에 적지 않고 GitHub Secrets의 GEMINI_API_KEY에서 읽어요.
+# ---------------------------------------------------------------
+# 구글이 모델을 자주 교체해서, 앞의 것이 안 되면 다음 것을 시도해요.
+# 나중에 모델 이름이 바뀌면 이 목록만 고치면 돼요.
+GEMINI_MODELS = [m for m in [os.environ.get("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-3.6-flash"] if m]
 
 
-def fetch_fear_greed_from_cnn():
-    """CNN에서 공포탐욕지수(현재값, 비교값, 1년 추이)를 가져와요."""
-    req = urllib.request.Request(
-        CNN_URL,
-        headers={
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-            ),
-            "Accept": "application/json",
-            "Origin": "https://edition.cnn.com",
-            "Referer": "https://edition.cnn.com/",
-        },
-    )
-    with urllib.request.urlopen(req, timeout=20) as res:
-        raw = json.load(res)
+def ask_gemini_json(prompt):
+    """Gemini에게 질문하고 JSON 형태의 답을 받아요."""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY가 설정되지 않았어요 (GitHub Secrets 확인)")
 
-    now = raw["fear_and_greed"]
-    score = round(float(now["score"]))
-
-    prev = {}
-    for key, src in [
-        ("close", "previous_close"),
-        ("week", "previous_1_week"),
-        ("month", "previous_1_month"),
-        ("year", "previous_1_year"),
-    ]:
-        if now.get(src) is not None:
-            prev[key] = round(float(now[src]))
-
-    points = raw.get("fear_and_greed_historical", {}).get("data", [])[-365:]
-    history = {
-        "labels": [
-            datetime.fromtimestamp(p["x"] / 1000, timezone.utc).strftime("%Y-%m-%d")
-            for p in points
-        ],
-        "values": [round(float(p["y"])) for p in points],
-    }
-
-    return {
-        "score": score,
-        "label": fear_greed_label(score),
-        "prev": prev,
-        "history": history,
-        "asof": str(now.get("timestamp", TODAY))[:10],
-        "source": "cnn",
-        "fetched": TODAY,
-    }
-
-
-def fear_greed_from_manual():
-    """CNN이 막혔을 때를 위한 대비책: manual.json의 fear_greed 값을 써요."""
-    raw = load_json("manual.json", {})
-    m = raw.get("fear_greed") if isinstance(raw, dict) else None
-    if isinstance(m, dict) and m.get("score") is not None:
-        score = round(float(m["score"]))
-        result = {
-            "score": score,
-            "label": fear_greed_label(score),
-            "asof": m.get("asof", TODAY),
-            "source": "manual",
-            "fetched": TODAY,
+    body = json.dumps(
+        {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.8},
         }
-        if isinstance(m.get("prev"), dict):
-            result["prev"] = m["prev"]
-        return result
-    return None
+    ).encode("utf-8")
+
+    last_err = None
+    for model in GEMINI_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        req = urllib.request.Request(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json", "x-goog-api-key": key},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=90) as res:
+                raw = json.load(res)
+            parts = raw["candidates"][0]["content"]["parts"]
+            text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+            if text.startswith("```"):  # 혹시 코드 표시(```)로 감싸서 오면 벗겨내요
+                text = text.strip("`")
+                if text.lower().startswith("json"):
+                    text = text[4:]
+            print(f"Gemini 응답 OK (모델: {model})")
+            return json.loads(text)
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", "ignore")[:200]
+            last_err = f"{model}: HTTP {e.code} {detail}"
+        except Exception as e:
+            last_err = f"{model}: {e}"
+        print("Gemini 시도 실패:", last_err)
+    raise RuntimeError(last_err)
+
+
+ENGLISH_FIELDS = ("term", "pron", "meaning", "example", "example_ko")
+
+
+def make_english(old):
+    """컨설팅·임원 보고용 비즈니스 영어 표현 10개를 AI가 새로 만들어요."""
+    used = old.get("english_used", [])
+    prompt = (
+        "당신은 글로벌 전략 컨설팅(McKinsey, BCG, Bain) 출신 비즈니스 영어 코치입니다. "
+        "한국의 B2B 소재·석유화학 업계 실무자가 임원 보고와 영문 이메일에서 바로 쓸 수 있는 "
+        "컨설팅 비즈니스 영어 표현 10개를 만들어 주세요.\n"
+        "조건:\n"
+        "1) 실제 컨설팅·임원 보고에서 쓰이는 표현일 것\n"
+        "2) 10개가 서로 다른 주제일 것\n"
+        "3) 아래 '이미 사용한 표현'과 겹치지 않을 것\n"
+        "4) term=영어 표현, pron=한글 발음 표기, meaning=짧은 한국어 뜻, "
+        "example=짧은 영어 예문 한 문장, example_ko=그 예문의 한국어 해석\n"
+        '반드시 이 JSON 형식으로만 답하세요: {"items":[{"term":"","pron":"","meaning":"","example":"","example_ko":""}]}\n'
+        "이미 사용한 표현: " + json.dumps(used, ensure_ascii=False)
+    )
+    result = ask_gemini_json(prompt)
+    items = result.get("items") if isinstance(result, dict) else result
+
+    clean = []
+    for it in items or []:
+        if isinstance(it, dict) and all(str(it.get(k, "")).strip() for k in ENGLISH_FIELDS):
+            clean.append({k: str(it[k]).strip() for k in ENGLISH_FIELDS})
+    if len(clean) < 10:
+        raise ValueError(f"유효한 표현이 {len(clean)}개뿐이에요")
+    clean = clean[:10]
+
+    used_new = ([c["term"] for c in clean] + used)[:100]  # 최근 100개까지만 기억
+    return {"date": TODAY, "items": clean}, used_new
 
 
 # ---------------------------------------------------------------
@@ -234,22 +238,16 @@ def main():
         data["stocks"][group] = rows
     print("종목 OK:", {k: len(v) for k, v in data["stocks"].items()})
 
-    # 공포탐욕지수: CNN -> manual.json -> 어제 값 순서로 시도
+    # 영어 표현 10선 (Gemini)
     try:
-        data["fear_greed"] = fetch_fear_greed_from_cnn()
-        print("공포탐욕지수 OK (CNN):", data["fear_greed"]["score"])
+        data["english"], data["english_used"] = make_english(old)
+        print("영어 표현 OK:", data["english"]["items"][0]["term"], "외 9개")
     except Exception as e:
-        problems.append(f"CNN 공포탐욕지수 실패: {e}")
-        manual = fear_greed_from_manual()
-        if manual:
-            data["fear_greed"] = manual
-            print("공포탐욕지수: manual.json 값 사용")
-        elif old.get("fear_greed"):
-            kept = dict(old["fear_greed"])
-            # 옛 값이라는 표시를 위해 fetched를 옛 날짜로 둬요 (화면에 경고가 떠요)
-            kept.setdefault("fetched", old.get("updated"))
-            data["fear_greed"] = kept
-            print("공포탐욕지수: 어제 값 유지")
+        problems.append(f"영어 표현 실패 (어제 것 유지): {e}")
+        if old.get("english"):
+            data["english"] = old["english"]
+        if old.get("english_used"):
+            data["english_used"] = old["english_used"]
 
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
