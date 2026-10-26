@@ -5,7 +5,7 @@ update_data.py
 대시보드(index.html)는 이 data.json을 읽어서 화면을 그립니다.
 
 가져오는 것: 환율, WTI, Brent(2년치), 국내/글로벌 종목 시세, CNN 공포탐욕지수,
-             영어 표현 10선(Gemini AI가 매일 새로 작성)
+             영어 표현 10선(Gemini AI가 매일 새로 작성), 뉴스 TOP 10(구글 뉴스에서 실제 기사)
 (두바이유, MOPJ 납사, 스프레드, 공포탐욕지수는 제외하기로 했어요)
 
 어떤 항목이 실패해도 전체가 멈추지 않고, 실패한 항목은 어제 값을 그대로 둡니다.
@@ -14,7 +14,10 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
 from datetime import datetime, timedelta, timezone
 
 import yfinance as yf
@@ -30,6 +33,21 @@ TODAY = datetime.now(KST).strftime("%Y-%m-%d")
 CNN_URL = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
 
 OIL = {"wti": "CL=F", "brent": "BZ=F"}
+
+# 뉴스 TOP 10: (화면에 보일 분류, 구글 뉴스 검색어)
+# 검색어를 바꾸면 가져오는 기사가 달라져요.
+NEWS_TOPICS = [
+    ("석유화학", "납사 에틸렌 석유화학"),
+    ("에너지", "국제유가 WTI 브렌트"),
+    ("반도체", "SK하이닉스 삼성전자 HBM 반도체"),
+    ("글로벌 테크", "엔비디아 AI 인프라 빅테크"),
+    ("매크로", "미국 국채금리 연준 증시"),
+    ("화학전략", "석유화학 구조조정 스페셜티"),
+    ("환율 동향", "원달러 환율"),
+    ("ESG/친환경", "탄소국경세 친환경 플라스틱"),
+    ("공급망", "중동 해상운임 원유 공급망"),
+    ("기업 실적", "LG화학 롯데케미칼 실적"),
+]
 
 DOMESTIC = [
     ("KOSPI", "^KS11", "index"),
@@ -273,6 +291,58 @@ def make_english(old):
 
 
 # ---------------------------------------------------------------
+# 2-3) 뉴스: 구글 뉴스 RSS에서 실제 기사 제목과 링크를 가져와요 (AI가 만들지 않아요)
+# ---------------------------------------------------------------
+def fetch_news_item(query, used_titles):
+    """검색어로 최근 기사 하나를 찾아요. 먼저 2일 이내, 없으면 7일 이내."""
+    for window in ("2d", "7d"):
+        q = urllib.parse.quote(f"{query} when:{window}")
+        url = f"https://news.google.com/rss/search?q={q}&hl=ko&gl=KR&ceid=KR:ko"
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36"},
+        )
+        with urllib.request.urlopen(req, timeout=20) as res:
+            root = ET.fromstring(res.read())
+
+        for item in root.iter("item"):
+            title = (item.findtext("title") or "").strip()
+            link = (item.findtext("link") or "").strip()
+            src = item.find("source")
+            source = (src.text or "").strip() if src is not None and src.text else ""
+            if source and title.endswith(" - " + source):  # 제목 끝의 " - 매체명"은 따로 보여줘요
+                title = title[: -len(" - " + source)].strip()
+            if not title or not link.startswith("http") or title in used_titles:
+                continue
+            pub = ""
+            try:
+                pub = parsedate_to_datetime(item.findtext("pubDate")).astimezone(KST).strftime("%Y-%m-%d")
+            except Exception:
+                pass
+            return {"title": title, "source": source, "link": link, "pub": pub}
+    raise ValueError("검색 결과가 없어요")
+
+
+def make_news(old):
+    """분류별로 기사 하나씩, 총 10개를 모아요. 실패한 분류는 어제 기사를 유지해요."""
+    old_by_tag = {n.get("tag"): n for n in (old.get("news") or {}).get("items", [])}
+    items, used, problems = [], set(), []
+    for tag, query in NEWS_TOPICS:
+        try:
+            art = fetch_news_item(query, used)
+            art["tag"] = tag
+            used.add(art["title"])
+            items.append(art)
+        except Exception as e:
+            problems.append(f"뉴스[{tag}] 실패: {e}")
+            if tag in old_by_tag:
+                items.append(old_by_tag[tag])
+    if not items:
+        raise RuntimeError("뉴스를 하나도 못 가져왔어요")
+    return {"date": TODAY, "items": items}, problems
+
+
+# ---------------------------------------------------------------
 # 3) 메인: 위의 것들을 차례로 실행해서 data.json을 만들어요
 # ---------------------------------------------------------------
 def main():
@@ -348,6 +418,16 @@ def main():
             data["english"] = old["english"]
         if old.get("english_used"):
             data["english_used"] = old["english_used"]
+
+    # 뉴스 TOP 10 (구글 뉴스 RSS)
+    try:
+        data["news"], news_problems = make_news(old)
+        problems.extend(news_problems)
+        print(f"뉴스 OK: {len(data['news']['items'])}개")
+    except Exception as e:
+        problems.append(f"뉴스 실패 (어제 것 유지): {e}")
+        if old.get("news"):
+            data["news"] = old["news"]
 
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
