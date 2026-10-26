@@ -308,10 +308,6 @@
                 <div class="filter-group" id="metric-buttons">
                     <button class="filter-btn active" onclick="selectMetric('wti', this)">WTI 원유</button>
                     <button class="filter-btn" onclick="selectMetric('brent', this)">Brent 원유</button>
-                    <button class="filter-btn" onclick="selectMetric('dubai', this)">두바이유</button>
-                    <button class="filter-btn" onclick="selectMetric('naphtha', this)">MOPJ 납사</button>
-                    <button class="filter-btn" onclick="selectMetric('spread', this)">에틸렌 스프레드</button>
-                    <button class="filter-btn" onclick="selectMetric('propylene', this)">프로필렌 스프레드</button>
                 </div>
                 <div class="filter-group" id="period-buttons">
                     <button class="filter-btn" onclick="changePeriod('3m', this)">3개월</button>
@@ -596,10 +592,6 @@ let myChart = null;
 const metricLabels = {
     wti: 'WTI 원유 ($/bbl)',
     brent: 'Brent 원유 ($/bbl)',
-    dubai: '두바이유 ($/bbl)',
-    naphtha: 'MOPJ 납사 ($/MT)',
-    spread: '에틸렌-납사 스프레드 ($/MT)',
-    propylene: '프로필렌-납사 스프레드 ($/MT)'
 };
 
 let DATA = null;
