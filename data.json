@@ -2,12 +2,12 @@
  "updated": "2026-10-26",
  "metrics": {
   "wti": {
-   "price": 101.22,
-   "change": -1.99
+   "price": 101.19,
+   "change": -2.01
   },
   "brent": {
-   "price": 110.06,
-   "change": -5.71
+   "price": 110.08,
+   "change": -5.69
   }
  },
  "series": {
@@ -1018,7 +1018,7 @@
     97.15,
     99.47,
     103.27,
-    101.22
+    101.19
    ]
   },
   "brent": {
@@ -2028,7 +2028,7 @@
     108.82,
     113.17,
     116.72,
-    110.06
+    110.08
    ]
   }
  },
@@ -2118,9 +2118,9 @@
    }
   ]
  },
- "fx": 1323.98,
+ "fx": 1324.67,
  "fear_greed": {
-  "score": 20,
+  "score": 22,
   "label": "극단적 공포",
   "prev": {
    "close": 21,
@@ -2631,9 +2631,9 @@
     30,
     27,
     19,
-    20,
-    20,
-    20
+    22,
+    22,
+    22
    ]
   },
   "asof": "2026-10-26",
@@ -2644,78 +2644,88 @@
   "date": "2026-10-26",
   "items": [
    {
-    "term": "Margin expansion",
-    "pron": "마진 익스팬션",
-    "meaning": "수익성 개선 (마진 확대)",
-    "example": "We expect significant margin expansion following the shift toward high-value specialty chemical products.",
-    "example_ko": "고부가 특수 화학 제품으로의 전환에 따라 현저한 수익성 개선이 기대됩니다."
+    "term": "Feedstock flexibility",
+    "pron": "피드스톡 플렉서빌리티",
+    "meaning": "원료 사용의 유연성",
+    "example": "Enhancing feedstock flexibility will protect our spreads against volatile naphtha prices.",
+    "example_ko": "원료 유연성을 강화하면 변동성이 큰 납사 가격에 맞춰 우리의 스프레드를 방어할 수 있습니다."
    },
    {
-    "term": "Debottlenecking",
-    "pron": "디보틀넥킹",
-    "meaning": "공정 병목 해소를 통한 생산능력 증대",
-    "example": "Debottlenecking the plant operations will increase production capacity by 15% with minimal capital expenditure.",
-    "example_ko": "공장 운영의 병목 현상을 해소하면 최소한의 설비 투자로 생산 능력을 15% 증대할 수 있습니다."
+    "term": "Pass-through pricing",
+    "pron": "패스 쓰루 프라이싱",
+    "meaning": "원가 연동 가격 책정",
+    "example": "We should transition key enterprise accounts to pass-through pricing to mitigate raw material cost fluctuations.",
+    "example_ko": "원자재 가격 변동성을 완화하기 위해 핵심 기업 고객들과의 계약을 원가 연동 가격제로 전환해야 합니다."
    },
    {
-    "term": "Dual sourcing strategy",
-    "pron": "듀얼 소싱 스트래티지",
-    "meaning": "원자재 공급처 이원화 전략",
-    "example": "Adopting a dual sourcing strategy for key raw materials is critical to mitigating supply chain disruption risks.",
-    "example_ko": "핵심 원자재에 대한 공급처 이원화 전략 채택은 공급망 중단 리스크를 완화하는 데 필수적입니다."
+    "term": "Scope 3 emissions mitigation",
+    "pron": "스코프 쓰리 이미션스 미티게이션",
+    "meaning": "Scope 3 배출량 감축",
+    "example": "Partnering with low-carbon suppliers is essential for our long-term Scope 3 emissions mitigation.",
+    "example_ko": "장기적인 Scope 3 배출량 감축을 위해서는 저탄소 공급업체와의 협력이 필수적입니다."
    },
    {
-    "term": "Strategic pivot",
-    "pron": "스트래티직 피벗",
-    "meaning": "전략적 방향 전환",
-    "example": "The management board approved a strategic pivot toward bio-based polymers to capture green market premiums.",
-    "example_ko": "경영진은 친환경 시장 프리미엄을 선점하기 위해 바이오 고분자 중심의 전략적 방향 전환을 승인했습니다."
+    "term": "Premiumization strategy",
+    "pron": "프리미엄마이세이션 스트래터지",
+    "meaning": "고부가가치 제품 전환 전략",
+    "example": "A shift toward a premiumization strategy will reduce our exposure to commoditized polymer markets.",
+    "example_ko": "고부가가치화 전략으로의 전환은 범용 폴리머 시장에 대한 노출도를 줄여줄 것입니다."
    },
    {
-    "term": "Carbon intensity reduction",
-    "pron": "카본 인텐시티 리덕션",
-    "meaning": "탄소 배출 강도 감축",
-    "example": "Accelerating carbon intensity reduction is now a primary requirement from our global OEM clients.",
-    "example_ko": "탄소 배출 강도 감축을 가속화하는 것은 이제 글로벌 OEM 고객사들의 핵심 요구사항입니다."
+    "term": "CAPEX prioritization",
+    "pron": "캐펙스 프라이어리티제이션",
+    "meaning": "자본 지출(설비 투자) 우선순위화",
+    "example": "Rigorous CAPEX prioritization is required to maintain liquidity during market uncertainties.",
+    "example_ko": "시장 불확실성 속에서 유동성을 유지하려면 철저한 설비 투자 우선순위 매기기가 필요합니다."
    },
    {
-    "term": "Cyclical downturn",
-    "pron": "사이클리컬 다운턴",
-    "meaning": "업황의 주기적 경기 침체",
-    "example": "To navigate the current cyclical downturn in the petrochemical sector, strict cash flow control is imperative.",
-    "example_ko": "석유화학 섹터의 현재 주기적 경기 침체를 극복하기 위해서는 엄격한 현금 흐름 관리가 필수적입니다."
+    "term": "Joint venture synergy",
+    "pron": "조인트 벤처 시너지",
+    "meaning": "합작투자를 통한 시너지",
+    "example": "The proposed joint venture synergy will grant us immediate access to Southeast Asian distribution channels.",
+    "example_ko": "제안된 합작투자 시너지를 통해 동남아시아 유통 채널을 즉각 확보할 수 있을 것입니다."
    },
    {
-    "term": "Value engineering",
-    "pron": "밸류 엔지니어링",
-    "meaning": "가치 공학 (원가 절감 및 성능 최적화)",
-    "example": "Through value engineering, our R&D team reduced manufacturing costs without compromising material specifications.",
-    "example_ko": "가치 공학을 통해 R&D 팀은 소재 스펙의 하향 없이 제조 원가를 절감했습니다."
+    "term": "Geopolitical risk hedging",
+    "pron": "지오폴리티컬 리스크 헤징",
+    "meaning": "지정학적 리스크 분산 및 관리",
+    "example": "Regionalizing our supply chain acts as an effective geopolitical risk hedging mechanism.",
+    "example_ko": "공급망의 지역화는 효과적인 지정학적 리스크 헤징 메커니즘으로 작용합니다."
    },
    {
-    "term": "Bottom-line impact",
-    "pron": "바텀라인 임팩트",
-    "meaning": "최종 순이익에 미치는 영향",
-    "example": "The energy efficiency initiative is projected to yield a positive bottom-line impact starting in Q3.",
-    "example_ko": "에너지 효율화 추진안은 3분기부터 최종 순이익에 긍정적인 영향을 줄 것으로 전망됩니다."
+    "term": "Demand destruction",
+    "pron": "디맨드 디스트럭션",
+    "meaning": "고물가·고유가로 인한 수요 파괴",
+    "example": "Persistent high energy costs could lead to structural demand destruction in downstream industries.",
+    "example_ko": "지속되는 고에너지 비용은 전방 산업에서 구조적인 수요 위축을 초래할 수 있습니다."
    },
    {
-    "term": "Asset rationalization",
-    "pron": "에셋 래셔널라이제이션",
-    "meaning": "비효율 자산 효율화 및 재편",
-    "example": "Asset rationalization of low-margin production lines will optimize our overall capital allocation.",
-    "example_ko": "저마진 생산 라인의 자산 효율화는 전체 자본 배분을 최적화할 것입니다."
+    "term": "Yield optimization",
+    "pron": "일드 옵티마이세이션",
+    "meaning": "수율 최적화",
+    "example": "Advanced process control technologies drove significant yield optimization across all cracking units.",
+    "example_ko": "고도화된 공정 제어 기술을 통해 모든 크래킹 설비에서 상당한 수율 최적화를 달성했습니다."
    },
    {
-    "term": "Sensitivity analysis",
-    "pron": "센서티비티 어낼러시스",
-    "meaning": "민감도 분석 (변수 변화에 따른 결과 예측)",
-    "example": "The sensitivity analysis indicates that our profitability remains resilient even if crude oil prices fluctuate by 20%.",
-    "example_ko": "민감도 분석 결과 유가가 20% 변동하더라도 당사의 수익성은 견고하게 유지되는 것으로 나타났습니다."
+    "term": "Stranded asset risk",
+    "pron": "스트랜디드 애셋 리스크",
+    "meaning": "좌초자산(가치 상실 자산) 리스크",
+    "example": "Accelerating decarbonization policies increases the stranded asset risk for conventional refinery assets.",
+    "example_ko": "가속화되는 탈탄소화 정책은 전통적인 정제 자산의 좌초자산 리스크를 높입니다."
    }
   ]
  },
  "english_used": [
+  "Feedstock flexibility",
+  "Pass-through pricing",
+  "Scope 3 emissions mitigation",
+  "Premiumization strategy",
+  "CAPEX prioritization",
+  "Joint venture synergy",
+  "Geopolitical risk hedging",
+  "Demand destruction",
+  "Yield optimization",
+  "Stranded asset risk",
   "Margin expansion",
   "Debottlenecking",
   "Dual sourcing strategy",
