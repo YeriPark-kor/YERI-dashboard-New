@@ -761,7 +761,7 @@ function renderEnglish() {
         `<tr><td>${i + 1}</td><td><b>${esc(it.term)}</b></td><td style="color:var(--color-neon-green)">${esc(it.pron)}</td><td>${esc(it.meaning)}</td><td>${esc(it.example)} (${esc(it.example_ko)})</td></tr>`
     ).join('');
 }
-    function renderNews() {
+function renderNews() {
     const items = DATA.news && DATA.news.items;
     if (!items || !items.length) return;   // 데이터가 없으면 기존 카드를 그대로 둬요
     const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
